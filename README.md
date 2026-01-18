@@ -20,7 +20,7 @@ Fedora
 sudo dnf install jq
 ```
 
-Run
+Run/Stop
 ```
 ~/.config/blacklayer/call-blacklayer.sh
 ```  
