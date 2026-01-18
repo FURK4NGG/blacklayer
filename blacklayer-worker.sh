@@ -16,6 +16,8 @@ EVENT_DRIVEN="${EVENT_DRIVEN:-$HOME/.config/blacklayer/event-driven.sh}"
 BLACKLAYER_BIN="$BASE_DIR/blacklayer"
 COUNT_FILE="$BASE_DIR/.blacklayer_count"
 STATE_DIR="$BASE_DIR/.blacklayer_state"
+WAYBAR_BIN="/usr/bin/waybar"
+WAYBAR_CONFIG_DIR="$HOME/.config/waybar"
 
 
 # -------------------------
