@@ -28,10 +28,9 @@ chmod 600 ~/.config/blacklayer/*.conf 2>/dev/null || true
 [ -f ~/.config/blacklayer/blacklayer ] && chmod +x ~/.config/blacklayer/blacklayer  
 chmod 700 ~/.config/blacklayer  
 
-cd ~/.config/blacklayer/  
-
  
-# If you want to disappear waybar when blacklayer is active follow these steps:  
+# If you want to disappear waybar when blacklayer is active follow these steps: 
+cd ~/.config/blacklayer/  
 sudo chown -R "$USER:$USER" ~/.config/waybar  
 chmod 700 ~/.config/waybar 
 ```
