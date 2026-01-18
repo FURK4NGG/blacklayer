@@ -23,6 +23,7 @@ sudo dnf install jq
 
 mkdir -p ~/.config/blacklayer  
 cp blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklayer.sh start-waybars.sh generate-waybar-configs.sh ~/.config/blacklayer/  
+sudo chown -R bob:bob ~/.config/blacklayer/  
 chmod +x ~/.config/blacklayer/*.sh 2>/dev/null || true  
 chmod 600 ~/.config/blacklayer/*.conf 2>/dev/null || true  
 [ -f ~/.config/blacklayer/blacklayer ] && chmod +x ~/.config/blacklayer/blacklayer  
