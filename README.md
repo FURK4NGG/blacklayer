@@ -20,11 +20,6 @@ Fedora
 sudo dnf install jq
 ```
 
-Run/Stop
-```
-~/.config/blacklayer/call-blacklayer.sh
-```  
-
 
 mkdir -p ~/.config/blacklayer  
 cp blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklayer.sh ~/.config/blacklayer/  
@@ -33,6 +28,10 @@ chmod 600 ~/.config/blacklayer/*.conf 2>/dev/null || true
 [ -f ~/.config/blacklayer/blacklayer ] && chmod +x ~/.config/blacklayer/blacklayer  
 chmod 700 ~/.config/blacklayer  
 
+Run/Stop
+```
+~/.config/blacklayer/call-blacklayer.sh
+```  
 
 # Tips  
 To verify whether the blacklayer process is running, use:  
