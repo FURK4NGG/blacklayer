@@ -48,6 +48,10 @@ Run/Stop
 ~/.config/blacklayer/call-blacklayer.sh
 ```
 
+## Roadmap
+- [x] Changeable background(png,jpg,gif) using by .conf
+- [ ] Run logout codes when detect no movement
+
 # Tips  
 To verify whether the blacklayer process is running, use:  
 ps aux | grep call-blacklayer.sh  
