@@ -54,6 +54,8 @@ cp -r ./* "$BASE_DIR/"
 echo "[blacklayer] setting permissions"
 
 chmod +x "$BASE_DIR"/*.sh 2>/dev/null || true
+chmod 600 "$BASE_DIR"/*.conf 2>/dev/null || true
+[ -f "$BASE_DIR/blacklayer" ] && chmod +x "$BASE_DIR/blacklayer"
 chmod 700 "$BASE_DIR"
 
 # -------------------------
