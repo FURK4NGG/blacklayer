@@ -46,7 +46,8 @@ mkdir -p "$BASE_DIR"
 # Copy files
 # -------------------------
 echo "[blacklayer] copying files to $BASE_DIR"
-cp -r ./* "$BASE_DIR/"
+cp blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklayer.sh "$BASE_DIR/" 2>/dev/null
+
 
 # -------------------------
 # Permissions
