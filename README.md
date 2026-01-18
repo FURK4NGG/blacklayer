@@ -31,7 +31,12 @@ chmod 700 ~/.config/blacklayer
 Run/Stop
 ```
 ~/.config/blacklayer/call-blacklayer.sh
-```  
+```
+
+# For Waybar  
+❌ exec-once = waybar &
+✅ exec-once = ~/.config/blacklayer/start-waybars.sh
+
 
 # Tips  
 To verify whether the blacklayer process is running, use:  
