@@ -28,15 +28,20 @@ chmod 600 ~/.config/blacklayer/*.conf 2>/dev/null || true
 [ -f ~/.config/blacklayer/blacklayer ] && chmod +x ~/.config/blacklayer/blacklayer  
 chmod 700 ~/.config/blacklayer  
 
+sudo chown -R "$USER:$USER" ~/.config/waybar  
+chmod 700 ~/.config/waybar  
+
+
+
+# For Waybar  
+❌ exec-once = waybar &  
+✅ exec-once = ~/.config/blacklayer/start-waybars.sh
+
+
 Run/Stop
 ```
 ~/.config/blacklayer/call-blacklayer.sh
 ```
-
-# For Waybar  
-❌ exec-once = waybar &
-✅ exec-once = ~/.config/blacklayer/start-waybars.sh
-
 
 # Tips  
 To verify whether the blacklayer process is running, use:  
