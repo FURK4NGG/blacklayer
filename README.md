@@ -26,8 +26,8 @@ Run
 ```  
 
 
-#Tips
-To verify whether the blacklayer process is running, use:
+# Tips  
+To verify whether the blacklayer process is running, use:  
 ps aux | grep call-blacklayer.sh  
 
 Note: The `grep` command itself may appear in the output.  
