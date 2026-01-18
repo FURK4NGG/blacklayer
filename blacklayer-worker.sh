@@ -63,6 +63,8 @@ while true; do
             ISWORKING=$(<"$STATE_FILE")
 
             if [ "$ISWORKING" = "false" ] && ! pgrep -f "$BLACKLAYER_BIN $MONITOR_NAME" >/dev/null 2>&1; then
+                pkill -f "waybar.*$MONITOR_NAME" 2>/dev/null
+            
                 "$BLACKLAYER_BIN" "$MONITOR_NAME" &
                 nohup bash -c "$EVENT_DRIVEN $MONITOR_NAME $EVENT_POLL_INTERVAL" >/dev/null 2>&1 &
                 echo "true" > "$STATE_FILE"
