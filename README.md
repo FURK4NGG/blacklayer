@@ -26,6 +26,14 @@ Run/Stop
 ```  
 
 
+mkdir -p ~/.config/blacklayer  
+cp blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklayer.sh ~/.config/blacklayer/  
+chmod +x ~/.config/blacklayer/*.sh 2>/dev/null || true  
+chmod 600 ~/.config/blacklayer/*.conf 2>/dev/null || true  
+[ -f ~/.config/blacklayer/blacklayer ] && chmod +x ~/.config/blacklayer/blacklayer  
+chmod 700 ~/.config/blacklayer  
+
+
 # Tips  
 To verify whether the blacklayer process is running, use:  
 ps aux | grep call-blacklayer.sh  
