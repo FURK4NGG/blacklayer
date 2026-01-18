@@ -31,6 +31,8 @@ chmod 700 ~/.config/blacklayer
 sudo chown -R "$USER:$USER" ~/.config/waybar  
 chmod 700 ~/.config/waybar  
 
+./generate-waybar-configs.sh  
+
 
 
 # For Waybar  
