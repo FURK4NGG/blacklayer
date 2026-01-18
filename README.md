@@ -23,7 +23,14 @@ sudo dnf install jq
 Run
 ```
 ~/.config/blacklayer/call-blacklayer.sh
-```
+```  
+
+
+#Tips
+To verify whether the blacklayer process is running, use:
+ps aux | grep call-blacklayer.sh  
+
+Note: The `grep` command itself may appear in the output.  
 
 # Fast Installation   
 sudo pacman -Syu git  
