@@ -27,9 +27,9 @@ GNOME (Wayland), KDE Plasma (Wayland) !Not tested!
 - Listens for input events and stops Blacklayer when user activity is detected  
 - Blacklayer aktifken çalışır ve mouse/etkileşim algılandığında ekran koruyucuyu kapatır  
 
-
-
-
+ 
+ 
+ 
 
 ## [generate-waybar-configs.sh]
 - Generates one Waybar config per monitor from a single base config  
