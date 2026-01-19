@@ -7,17 +7,26 @@ Required packets
 
 Arch
 ```
-sudo pacman -S jq
+sudo pacman -S gtk3 gdk-pixbuf2 gtk-layer-shell jq
 ```
 
 Debian / Ubuntu
 ```
-sudo apt install jq
+sudo apt install \
+libgtk-3-0 \
+libgdk-pixbuf-2.0-0 \
+libgtk-layer-shell0 \
+jq
+
 ```
 
 Fedora
 ```
-sudo dnf install jq
+sudo dnf install \
+gtk3 \
+gdk-pixbuf2 \
+gtk-layer-shell \
+jq
 ```
 
 
