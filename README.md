@@ -4,28 +4,33 @@ A lightweight, per-monitor screen saver for Hyprland that automatically dims ina
 
 ## [blacklayer.conf]
 - Stores Blacklayer configuration and resource settings  
-= Blacklayer’a ait ayarların ve kaynakların tutulduğu dosyadır  
+- Blacklayer’a ait ayarların ve kaynakların tutulduğu dosyadır  
 
 ## [call-blacklayer.sh]
 -Toggles Blacklayer by starting or stopping blacklayer-worker  
-/Çağrıldığında blacklayer-worker’ı başlatır veya tüm işlemleri sonlandırır (toggle)  
+- Çağrıldığında blacklayer-worker’ı başlatır veya tüm işlemleri sonlandırır (toggle)  
 
-## [blacklayer-worker.sh]        - Counts idle time and activates the screensaver while hiding other UI elements
-                              / Zamanı sayarak ekran koruyucuyu açar ve Waybar gibi diğer arayüzleri gizler
+## [blacklayer-worker.sh]
+- Counts idle time and activates the screensaver while hiding other UI elements  
+- Zamanı sayarak ekran koruyucuyu açar ve Waybar gibi diğer arayüzleri gizler  
 
-## [blacklayer]                  - Displays a fullscreen color, image, or animated GIF on the screen
-                              / Ekranda tercihe göre sadece renk, resim ya da GIF oynatır
+## [blacklayer]
+- Displays a fullscreen color, image, or animated GIF on the screen  
+- Ekranda tercihe göre sadece renk, resim ya da GIF oynatır  
 
-## [event-driven.sh]             - Listens for input events and stops Blacklayer when user activity is detected
-                              / Blacklayer aktifken çalışır ve mouse/etkileşim algılandığında ekran koruyucuyu kapatır
+## [event-driven.sh]
+- Listens for input events and stops Blacklayer when user activity is detected  
+- Blacklayer aktifken çalışır ve mouse/etkileşim algılandığında ekran koruyucuyu kapatır  
 
 
 
-## [generate-waybar-configs.sh] - Generates one Waybar config per monitor from a single base config
-                              / Tek bir config dosyasından her monitör için ayrı Waybar config’i üretir
+## [generate-waybar-configs.sh]
+- Generates one Waybar config per monitor from a single base config  
+- Tek bir config dosyasından her monitör için ayrı Waybar config’i üretir  
 
-## [start-waybars.sh]            - Starts all Waybar instances simultaneously
-                              / Tüm Waybar’ları aynı anda çalıştırmak için kullanılır
+## [start-waybars.sh]
+- Starts all Waybar instances simultaneously  
+- Tüm Waybar’ları aynı anda çalıştırmak için kullanılır  
 
 
 
