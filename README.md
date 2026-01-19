@@ -3,7 +3,7 @@ A lightweight, per-monitor screen saver for Hyprland that automatically dims ina
 
 
 ## [blacklayer.conf]
-- Stores Blacklayer configuration and resource settings
+- Stores Blacklayer configuration and resource settings  
 = Blacklayer’a ait ayarların ve kaynakların tutulduğu dosyadır  
 
 ## [call-blacklayer.sh]
