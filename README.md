@@ -1,6 +1,11 @@
 # blacklayer
 A lightweight, per-monitor screen saver for Hyprland that automatically dims inactive displays and instantly restores them on focus.
 
+# ✅ Works On
+wlroots-based Wayland compositors(Hyprland, Sway, River, Wayfire, Hikari, Labwc(wlroots based) )
+# ⚠️ PARTIALLY / LIMITED 
+GNOME (Wayland), KDE Plasma (Wayland) !Not tested!
+
 
 ## [blacklayer.conf]
 - Stores Blacklayer configuration and resource settings  
