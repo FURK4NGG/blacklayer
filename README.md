@@ -87,10 +87,7 @@ chmod 700 ~/.config/waybar
 ```
 ./generate-waybar-configs.sh  
 ```
-Then delete your default "config" file from '~/.config/waybar/' directory  
-
-
-# For Disappear Waybar  
+Change these codes in your hyprland.conf document  
 ❌ exec-once = waybar &  
 ✅ exec-once = ~/.config/blacklayer/start-waybars.sh
 
