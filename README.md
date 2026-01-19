@@ -50,6 +50,33 @@ Run/Stop
 ```
 
 # If you want to compile your special blacklayer.c document:
+Arch
+```
+sudo pacman -S gcc pkgconf gtk3 gdk-pixbuf2 gtk-layer-shell jq
+```
+
+Debian / Ubuntu
+```
+sudo apt install \
+build-essential \
+pkg-config \
+libgtk-3-dev \
+libgdk-pixbuf-2.0-dev \
+libgtk-layer-shell-dev \
+jq
+```
+
+Fedora
+```
+sudo dnf install \
+gcc \
+pkg-config \
+gtk3-devel \
+gdk-pixbuf2-devel \
+gtk-layer-shell-devel \
+jq
+```
+
 ```
 gcc -o ~/.config/blacklayer/blacklayer \
 ~/blacklayer/blacklayer.c \
