@@ -49,6 +49,14 @@ Run/Stop
 ~/.config/blacklayer/call-blacklayer.sh
 ```
 
+# If you want to compile your special blacklayer.c document:
+```
+gcc -o ~/.config/blacklayer/blacklayer \
+~/blacklayer/blacklayer.c \
+$(pkg-config --cflags --libs gtk+-3.0 gdk-pixbuf-2.0) \
+-lgtk-layer-shell
+```
+
 ## Roadmap
 - [x] Changeable background(png,jpg,gif) using by .conf
 - [ ] Run logout codes when detect no movement
