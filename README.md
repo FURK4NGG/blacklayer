@@ -92,7 +92,7 @@ Change these codes in your hyprland.conf document
 ✅ exec-once = ~/.config/blacklayer/start-waybars.sh
 
 
-Run/Stop
+Run/Stop blacklayer
 ```
 ~/.config/blacklayer/call-blacklayer.sh
 ```
