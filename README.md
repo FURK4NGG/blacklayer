@@ -48,7 +48,7 @@ chmod 700 ~/.config/waybar
 ```
 
 
-# For Waybar  
+# For Disappear Waybar  
 ❌ exec-once = waybar &  
 ✅ exec-once = ~/.config/blacklayer/start-waybars.sh
 
