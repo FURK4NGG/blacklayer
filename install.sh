@@ -15,14 +15,24 @@ install_jq() {
     echo "[blacklayer] jq not found, installing..."
 
     if command -v pacman >/dev/null 2>&1; then
-        sudo pacman -Sy --noconfirm jq
+        sudo pacman -Sy --noconfirm gtk3 gdk-pixbuf2 gtk-layer-shell jq
 
     elif command -v apt >/dev/null 2>&1; then
         sudo apt update
-        sudo apt install -y jq
+        sudo apt install -y \
+        libgtk-3-0 \
+        libgdk-pixbuf-2.0-0 \
+        libgtk-layer-shell0 \
+        jq
+
 
     elif command -v dnf >/dev/null 2>&1; then
-        sudo dnf install -y jq
+        sudo dnf install -y \
+        gtk3 \
+        gdk-pixbuf2 \
+        gtk-layer-shell \
+        jq
+
 
     else
         echo "[blacklayer] unsupported distro – please install jq manually"
@@ -46,7 +56,7 @@ mkdir -p "$BASE_DIR"
 # Copy files
 # -------------------------
 echo "[blacklayer] copying files to $BASE_DIR"
-cp blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklayer.sh "$BASE_DIR/" 2>/dev/null
+cp blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklayer.sh start-waybars.sh generate-waybar-configs.sh "$BASE_DIR/" 2>/dev/null
 
 
 # -------------------------
@@ -54,10 +64,37 @@ cp blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklay
 # -------------------------
 echo "[blacklayer] setting permissions"
 
+sudo chown -R bob:bob "$BASE_DIR"
+chmod 700 "$BASE_DIR"
 chmod +x "$BASE_DIR"/*.sh 2>/dev/null || true
 chmod 600 "$BASE_DIR"/*.conf 2>/dev/null || true
 [ -f "$BASE_DIR/blacklayer" ] && chmod +x "$BASE_DIR/blacklayer"
-chmod 700 "$BASE_DIR"
+
+
+echo "What is yours status bar?"
+echo "1 - Waybar"
+echo
+read -rp "Seçim (1): " CHOICE
+
+case "$CHOICE" in
+    1)
+        echo "[+] Waybar yapılandırması hazırlanıyor"
+
+        cd "$HOME/.config/blacklayer/" || {
+            echo "HATA: ~/.config/blacklayer bulunamadı"
+            exit 1
+        }
+
+        sudo chown -R "$USER:$USER" "$HOME/.config/waybar"
+        chmod 700 "$HOME/.config/waybar"
+
+        ./generate-waybar-configs.sh
+        ;;
+    *)
+        echo "Geçersiz seçim"
+        exit 1
+        ;;
+esac
 
 # -------------------------
 # Done
