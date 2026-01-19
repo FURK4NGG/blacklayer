@@ -7,7 +7,7 @@ A lightweight, per-monitor screen saver for Hyprland that automatically dims ina
 - Blacklayer’a ait ayarların ve kaynakların tutulduğu dosyadır  
 
 ## [call-blacklayer.sh]
--Toggles Blacklayer by starting or stopping blacklayer-worker  
+- Toggles Blacklayer by starting or stopping blacklayer-worker  
 - Çağrıldığında blacklayer-worker’ı başlatır veya tüm işlemleri sonlandırır (toggle)  
 
 ## [blacklayer-worker.sh]
