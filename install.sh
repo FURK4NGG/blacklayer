@@ -7,12 +7,16 @@ echo "[blacklayer] installing..."
 # Detect package manager & install jq
 # -------------------------
 install_jq() {
-    if command -v jq >/dev/null 2>&1; then
-        echo "[blacklayer] jq already installed"
+    if command -v jq >/dev/null 2>&1 \
+        && ldconfig -p 2>/dev/null | grep -q libgtk-3 \
+        && ldconfig -p 2>/dev/null | grep -q gdk_pixbuf \
+        && ldconfig -p 2>/dev/null | grep -q gtk-layer-shell; then
+        echo "[blacklayer] all runtime dependencies already installed"
         return
     fi
 
-    echo "[blacklayer] jq not found, installing..."
+    echo "[blacklayer] missing dependencies, installing..."
+
 
     if command -v pacman >/dev/null 2>&1; then
         sudo pacman -Sy --noconfirm gtk3 gdk-pixbuf2 gtk-layer-shell jq
