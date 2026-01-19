@@ -77,6 +77,7 @@ gtk-layer-shell-devel \
 jq
 ```
 
+Compile:
 ```
 gcc -o ~/.config/blacklayer/blacklayer \
 ~/blacklayer/blacklayer.c \
