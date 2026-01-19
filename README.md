@@ -46,6 +46,7 @@ chmod 700 ~/.config/waybar
 ```
 ./generate-waybar-configs.sh  
 ```
+Then delete your default "config" file from '~/.config/waybar/' directory  
 
 
 # For Disappear Waybar  
