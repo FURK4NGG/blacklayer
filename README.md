@@ -29,6 +29,8 @@ GNOME (Wayland), KDE Plasma (Wayland) !Not tested!
 
 
 
+
+
 ## [generate-waybar-configs.sh]
 - Generates one Waybar config per monitor from a single base config  
 - Tek bir config dosyasından her monitör için ayrı Waybar config’i üretir  
