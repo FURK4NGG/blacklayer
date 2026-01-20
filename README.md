@@ -135,7 +135,7 @@ $(pkg-config --cflags --libs gtk+-3.0 gdk-pixbuf-2.0) \
 
 ## Roadmap
 - [x] Changeable background(color, png, jpg, gif) using by .conf
-- [ ] Run logout codes when detect no movement
+- [ ] Run logout codes when detect no movement in any monitor
 
 # Tips  
 To verify whether the blacklayer process is running, use:  
