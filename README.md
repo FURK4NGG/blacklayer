@@ -134,7 +134,7 @@ $(pkg-config --cflags --libs gtk+-3.0 gdk-pixbuf-2.0) \
 ```
 
 ## Roadmap
-- [x] Changeable background(png,jpg,gif) using by .conf
+- [x] Changeable background(color, png, jpg, gif) using by .conf
 - [ ] Run logout codes when detect no movement
 
 # Tips  
