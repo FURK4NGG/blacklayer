@@ -70,6 +70,8 @@ jq
 ```
 
 ```
+git clone https://github.com/furk4ngg/blacklayer.git  
+cd blacklayer  
 mkdir -p ~/.config/blacklayer  
 cp blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklayer.sh start-waybars.sh generate-waybar-configs.sh ~/.config/blacklayer/  
 sudo chown -R bob:bob ~/.config/blacklayer/  
