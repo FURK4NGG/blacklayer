@@ -117,15 +117,22 @@ $(pkg-config --cflags --libs gtk+-3.0 gdk-pixbuf-2.0) \
 -lgtk-layer-shell
 ```
 <br><br>
+
 ## Here are the available settings in blacklayer.conf:  
 run_blacklayer=true → Enable per-monitor blacklayer  
 run_lock=true  → Lock the session after inactivity  
 run_sleep=true → Turn off all displays after longer inactivity  
-LOOP_INTERVAL=60, COUNT_THRESHOLD=5, EVENT_POLL_INTERVAL=3, resource=, color=  
+LOOP_INTERVAL=60 Main worker loop interval (in seconds)  
+COUNT_THRESHOLD=5 → Event-driven polling interval (in seconds)  
+EVENT_POLL_INTERVAL=3 → Inactivity trigger threshold  
+resource= → Blacklayer background resource(png, jpg, gif)  
+
+!If you want to change blacklayer color:  
+Change the color value: blacklayer.c > static const GdkRGBA DEFAULT_COLOR = { 0.0, 0.0, 0.0, 1.0 };  
+Then, compile the blacklayer.c file!  
 
 ## Here are the available settings in hypridle.conf:  
-In hypridle.conf, the timeout values define how long the system must remain completely idle (no keyboard or mouse input) before an action is triggered.  
-
+In hypridle.conf, the 'timeout:' values define how long the system must remain completely idle (no keyboard or mouse input) before an action is triggered.  
 <br><br>
 
 ## ❓ HOW IT WORKS ❓
