@@ -118,10 +118,10 @@ $(pkg-config --cflags --libs gtk+-3.0 gdk-pixbuf-2.0) \
 ```
 <br><br>
 ## Here are the available settings in blacklayer.conf:
-# run_blacklayer=true → Enable per-monitor blacklayer
-# run_lock=true  → Lock the session after inactivity
-# run_sleep=true → Turn off all displays after longer inactivity
-# LOOP_INTERVAL=60, COUNT_THRESHOLD=5, EVENT_POLL_INTERVAL=3, resource=, color
+run_blacklayer=true → Enable per-monitor blacklayer
+run_lock=true  → Lock the session after inactivity
+run_sleep=true → Turn off all displays after longer inactivity
+LOOP_INTERVAL=60, COUNT_THRESHOLD=5, EVENT_POLL_INTERVAL=3, resource=, color=
 
 ## Here are the available settings in hypridle.conf:
 In hypridle.conf, the timeout values define how long the system must remain completely idle (no keyboard or mouse input) before an action is triggered.
