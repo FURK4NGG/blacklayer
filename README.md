@@ -119,6 +119,7 @@ Arch
 ```
 sudo pacman -S gcc pkgconf gtk3 gdk-pixbuf2 gtk-layer-shell jq
 ```
+<br><br>
 
 Debian / Ubuntu
 ```
@@ -130,6 +131,7 @@ libgdk-pixbuf-2.0-dev \
 libgtk-layer-shell-dev \
 jq
 ```
+<br><br>
 
 Fedora
 ```
@@ -141,6 +143,7 @@ gdk-pixbuf2-devel \
 gtk-layer-shell-devel \
 jq
 ```
+<br><br>
 
 Compile:
 ```
@@ -149,6 +152,7 @@ gcc -o ~/.config/blacklayer/blacklayer \
 $(pkg-config --cflags --libs gtk+-3.0 gdk-pixbuf-2.0) \
 -lgtk-layer-shell
 ```
+<br><br>
 
 ## Roadmap
 - [x] Changeable and resizable background(color, png, jpg, gif) using by .conf
