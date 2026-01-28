@@ -9,7 +9,6 @@ wlroots-based Wayland compositors (Hyprland, Sway, River, Wayfire, Hikari, Labwc
 
 # ⚠️ PARTIALLY / LIMITED 
 GNOME (Wayland), KDE Plasma (Wayland) !Not tested!
-
 <br><br>
 
 ## ❓ HOW IT WORKS ❓
@@ -33,7 +32,6 @@ GNOME (Wayland), KDE Plasma (Wayland) !Not tested!
 ## [event-driven.sh]
 - Listens for input events and stops Blacklayer when user activity is detected  
 - Blacklayer aktifken çalışır ve mouse/etkileşim algılandığında ekran koruyucuyu kapatır  
-
 <br><br>
 
 ## [generate-waybar-configs.sh]
@@ -43,7 +41,6 @@ GNOME (Wayland), KDE Plasma (Wayland) !Not tested!
 ## [start-waybars.sh]
 - Starts all Waybar instances simultaneously  
 - Tüm Waybar’ları aynı anda çalıştırmak için kullanılır  
-
 <br><br>
 
 ## [HYPRIDLE]
