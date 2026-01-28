@@ -40,6 +40,8 @@ GNOME (Wayland), KDE Plasma (Wayland) !Not tested!
 - Starts all Waybar instances simultaneously  
 - Tüm Waybar’ları aynı anda çalıştırmak için kullanılır  
 
+## [HYPRIDLE]
+user-run(call-blacklayer.sh) --> Run Hypridle --> Detect no movement for X time --> idle-lock.sh or idle-sleep.sh(controls the blacklayer.conf>run-lock,run-sleep values for the run) --> If true(Lock Screen or Sleep Screen process) --> When movement detected run(idle-resume.sh)  
 
 
 # Blacklayer configration files (Setup Section) 
