@@ -132,7 +132,7 @@ Change the color value: blacklayer.c > static const GdkRGBA DEFAULT_COLOR = { 0.
 Then, compile the blacklayer.c file!  
 
 ## Here are the available settings in hypridle.conf:  
-In hypridle.conf, the 'timeout:' values define how long the system must remain completely idle (no keyboard or mouse input) before an action is triggered.  
+In hypridle.conf, the 'timeout:' values define how long the system must remain completely idle (no keyboard or mouse input) before the corresponding lock or sleep scripts are executed.  
 <br><br>
 
 ## ❓ HOW IT WORKS ❓
