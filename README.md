@@ -172,7 +172,7 @@ In hypridle.conf, the 'timeout:' values define how long the system must remain c
 <br><br>
 
 ## [HYPRIDLE]
-user-run(call-blacklayer.sh)  -->  Run Hypridle  -->  Detect no movement for X time  -->  idle-lock.sh or idle-sleep.sh(controls the blacklayer.conf>run-lock,run-sleep values for the run)  -->  If true(Lock Screen or Sleep Screen process)  -->  When movement detected run(idle-resume.sh)  
+user-run(call-blacklayer.sh)  -->  Run Hypridle  -->  Detect no movement for X time  -->  idle-lock.sh or idle-sleep.sh(controls the blacklayer.conf>run-lock,run-sleep values for the run)  -->  If value is true(Lock Screen or Sleep Screen process)  -->  When movement detected run(idle-resume.sh)  
 <br><br>
 
 ## Roadmap
