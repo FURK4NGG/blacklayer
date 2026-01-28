@@ -4,6 +4,8 @@ A lightweight, per-monitor screen saver for Hyprland that automatically dims ina
 
 https://github.com/user-attachments/assets/934e0234-892f-4389-a6b6-d26d6847dab5
 
+https://github.com/user-attachments/assets/a8207566-6148-4196-87dd-dba462894d42
+
 <br><br>
 # ✅ Works On
 wlroots-based Wayland compositors (Hyprland, Sway, River, Wayfire, Hikari, Labwc(wlroots based) )
