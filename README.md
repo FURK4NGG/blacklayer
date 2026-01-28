@@ -50,7 +50,7 @@ Arch
 sudo pacman -S gtk3 gdk-pixbuf2 gtk-layer-shell jq hypridle
 ```
 
-Debian / Ubuntu
+Debian / Ubuntu  
 !please install 'hypridle' manually!
 ```
 sudo apt install \
