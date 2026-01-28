@@ -6,6 +6,7 @@ wlroots-based Wayland compositors (Hyprland, Sway, River, Wayfire, Hikari, Labwc
 # ⚠️ PARTIALLY / LIMITED 
 GNOME (Wayland), KDE Plasma (Wayland) !Not tested!
 
+## ❓ HOW IT WORKS ❓
 
 ## [blacklayer.conf]
 - Stores Blacklayer configuration and resource settings  
