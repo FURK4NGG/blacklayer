@@ -1,4 +1,4 @@
-# blacklayer
+## 👀 blacklayer Overview  
 A lightweight, per-monitor screen saver for Hyprland that automatically dims inactive displays and instantly restores them on focus. It also supports optional global lock and display sleep actions after prolonged inactivity.  
 <br><br>
 
@@ -15,7 +15,7 @@ wlroots-based Wayland compositors (Hyprland, Sway, River, Wayfire, Hikari, Labwc
 GNOME (Wayland), KDE Plasma (Wayland) !Not tested!
 <br><br>
 
-# Blacklayer configration files (Setup Section) 
+## 📦 Setup  
 
 Required packets
 
@@ -77,7 +77,7 @@ Change these codes in your hyprland.conf document
 ✅ exec-once = ~/.config/blacklayer/start-waybars.sh
 
 
-Run/Stop blacklayer
+## 🎉 Run/Stop blacklayer
 ```
 ~/.config/blacklayer/call-blacklayer.sh
 ```
@@ -193,3 +193,8 @@ git clone https://github.com/furk4ngg/blacklayer.git
 cd blacklayer  
 chmod +x install.sh  
 ./install.sh  
+
+<br><br>
+
+## 🔒 License  
+<h1 align="center">📜 GPL-3.0 License</h1>
