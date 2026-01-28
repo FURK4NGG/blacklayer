@@ -97,7 +97,7 @@ systemctl --user enable hypridle.service
 ```
 
  
-# If you want to disappear waybar when blacklayer is active follow these steps: 
+# If you want to disappear waybar(for use 100% of screen) when blacklayer is active follow these steps: 
 ```
 sudo chown -R "$USER:$USER" ~/.config/waybar  
 chmod 700 ~/.config/waybar  
