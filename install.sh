@@ -79,8 +79,8 @@ echo "[blacklayer] copying files to $BASE_DIR"
 echo "[blacklayer] copying files to ~/.config/hypr/"
 echo "[blacklayer] copying files to ~/.config/systemd/user/"
 cp -rf blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklayer.sh start-waybars.sh generate-waybar-configs.sh idle-lock.sh idle-sleep.sh idle-resume.sh "$BASE_DIR/" 2>/dev/null
-sudo cp -rf "/pending-relocation/hypridle.conf" "~/.config/hypr/" 2>/dev/null
-sudo cp -rf "/pending-relocation/hypridle.service" "~/.config/systemd/user/" 2>/dev/null
+sudo cp -rf ./pending-relocation/hypridle.conf ~/.config/hypr/ 2>/dev/null
+sudo cp -rf ./pending-relocation/hypridle.service ~/.config/systemd/user/ 2>/dev/null
 
 
 # -------------------------
