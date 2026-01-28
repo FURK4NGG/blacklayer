@@ -122,9 +122,9 @@ $(pkg-config --cflags --libs gtk+-3.0 gdk-pixbuf-2.0) \
 run_blacklayer=true → Enable per-monitor blacklayer  
 run_lock=true  → Lock the session after inactivity  
 run_sleep=true → Turn off all displays after longer inactivity  
-LOOP_INTERVAL=60 Main worker loop interval (in seconds)  
-COUNT_THRESHOLD=5 → Event-driven polling interval (in seconds)  
-EVENT_POLL_INTERVAL=3 → Inactivity trigger threshold  
+LOOP_INTERVAL=60 → Main worker loop interval (in seconds)  
+COUNT_THRESHOLD=5 → Inactivity trigger threshold  
+EVENT_POLL_INTERVAL=3 → Event-driven polling interval (in seconds)  
 resource= → Blacklayer background resource(png, jpg, gif)  
 
 !If you want to change blacklayer color:  
