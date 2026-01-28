@@ -67,6 +67,7 @@ libgtk-layer-shell0 \
 jq
 
 ```
+<br><br>
 
 Fedora
 ```
@@ -77,6 +78,7 @@ gtk-layer-shell \
 jq \
 hypridle
 ```
+<br><br>
 
 ```
 git clone https://github.com/furk4ngg/blacklayer.git  
