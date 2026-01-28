@@ -1,5 +1,5 @@
 # blacklayer
-A lightweight, per-monitor screen saver for Hyprland that automatically dims inactive displays and instantly restores them on focus.
+A lightweight, per-monitor screen saver for Hyprland that automatically dims inactive displays and instantly restores them on focus. It also supports optional global lock and display sleep actions after prolonged inactivity.  
 <br><br>
 <!-- GIF -->
 <br><br>
