@@ -2,7 +2,7 @@
 A lightweight, per-monitor screen saver for Hyprland that automatically dims inactive displays and instantly restores them on focus. It also supports optional global lock and display sleep actions after prolonged inactivity.  
 <br><br>
 
-<center>https://github.com/user-attachments/assets/d42909ae-7d61-4324-a73d-2408b14048db<center>
+<center>https://github.com/user-attachments/assets/d42909ae-7d61-4324-a73d-2408b14048db</center>
 
 <br><br>
 # ✅ Works On
