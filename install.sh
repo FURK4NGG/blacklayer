@@ -60,7 +60,8 @@ mkdir -p "$BASE_DIR"
 # Copy files
 # -------------------------
 echo "[blacklayer] copying files to $BASE_DIR"
-cp blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklayer.sh start-waybars.sh generate-waybar-configs.sh "$BASE_DIR/" 2>/dev/null
+cp blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklayer.sh start-waybars.sh generate-waybar-configs.sh idle-lock.sh idle-sleep.sh idle-resume.sh "$BASE_DIR/" 2>/dev/null
+
 
 
 # -------------------------
