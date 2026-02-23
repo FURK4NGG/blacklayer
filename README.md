@@ -5,7 +5,7 @@ A lightweight, per-monitor screen saver for Hyprland that automatically dims ina
 [![Demo Video](https://github.com/user-attachments/assets/c99873a1-ef0a-42a6-a6e8-66ede9074440)](https://github.com/user-attachments/assets/40fe7394-0690-441f-a1b9-12b85e41d43b)
 
 [![Demo Video](https://github.com/user-attachments/assets/68f1ec5e-6734-45d1-9a4e-756ea2b618a6)](https://github.com/user-attachments/assets/a8207566-6148-4196-87dd-dba462894d42))
-https://github.com/user-attachments/assets/a8207566-6148-4196-87dd-dba462894d42
+
 
 <br><br>
 # ✅ Works On
