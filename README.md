@@ -181,6 +181,7 @@ user-run(call-blacklayer.sh)  -->  Run Hypridle  -->  Detect no movement for X t
 - [x] Run logout codes when detect no movement in any monitor
 - [x] Closes the screen when detect no movement in any monitor
 - [ ] Moving the workspaces from the screen where Blacklayer is running to another screen
+- [ ] Clock widget
 
 # Tips  
 To verify whether the blacklayer process is running, use:  
