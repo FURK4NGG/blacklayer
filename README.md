@@ -2,7 +2,7 @@
 A lightweight, per-monitor screen saver for Hyprland that automatically dims inactive displays and instantly restores them on focus. It also supports optional global lock and display sleep actions after prolonged inactivity.  
 <br><br>
 
-[![Demo Video](https://github.com/FURK4NGG/blacklayer/blob/main/{}/blacklayer.png)](https://github.com/FURK4NGG/blacklayer/blob/main/{}/blacklayer.mp4)
+[![Demo Video](https://github.com/FURK4NGG/blacklayer/blob/main/{}/blacklayer.mp4)](https://github.com/FURK4NGG/blacklayer/blob/main/{}/blacklayer.png)
 
 [![Demo Video](https://github.com/user-attachments/assets/68f1ec5e-6734-45d1-9a4e-756ea2b618a6)](https://github.com/user-attachments/assets/a8207566-6148-4196-87dd-dba462894d42)
 
