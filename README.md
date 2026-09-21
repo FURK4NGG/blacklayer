@@ -56,7 +56,7 @@ mkdir -p ~/.config/blacklayer
 cp blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklayer.sh start-waybars.sh generate-waybar-configs.sh idle-lock.sh idle-sleep.sh idle-resume.sh "$BASE_DIR/" 2>/dev/null  
 cp "/pending-relocation/hypridle.conf" "~/.config/hypr/" 2>/dev/null  
 cp "/pending-relocation/hypridle.service" "~/.config/systemd/user/" 2>/dev/null  
-sudo chown -R bob:bob ~/.config/blacklayer/  
+sudo chown -R "$USER:$USER" ~/.config/blacklayer/  
 chmod 700 ~/.config/blacklayer  
 chmod +x ~/.config/blacklayer/*.sh 2>/dev/null || true  
 chmod 600 ~/.config/blacklayer/*.conf 2>/dev/null || true  
