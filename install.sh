@@ -161,6 +161,7 @@ files=(
     blacklayer-worker.sh
     input-activity.py
     blacklayer-ui.py
+    start-waybars.sh
     generate-waybar-configs.sh
     LICENSE
     README.md
@@ -176,14 +177,17 @@ chmod 0755 \
     "$BASE_DIR/blacklayer-worker.sh" \
     "$BASE_DIR/input-activity.py" \
     "$BASE_DIR/blacklayer-ui.py" \
+    "$BASE_DIR/start-waybars.sh" \
     "$BASE_DIR/generate-waybar-configs.sh"
 
 chmod 0600 "$BASE_DIR/blacklayer.conf"
 
 mkdir -p "$BASE_DIR/.blacklayer_state/pids"
+mkdir -p "$BASE_DIR/.blacklayer_state/waybar"
 
 chmod 0700 "$BASE_DIR/.blacklayer_state"
 chmod 0700 "$BASE_DIR/.blacklayer_state/pids"
+chmod 0700 "$BASE_DIR/.blacklayer_state/waybar"
 
 # ---------------------------------------------------------
 # Remove obsolete files from older installations
@@ -193,7 +197,12 @@ rm -f \
     "$BASE_DIR/event-driven.sh" \
     "$BASE_DIR/.blacklayer_idle.py" \
     "$BASE_DIR/hypridle.conf" \
-    "$BASE_DIR/hypridle.service"
+    "$BASE_DIR/hypridle.service" \
+    "$BASE_DIR/call-blacklayer.sh" \
+    "$BASE_DIR/start-waybars-old.sh" \
+    "$BASE_DIR/idle-lock.sh" \
+    "$BASE_DIR/idle-sleep.sh" \
+    "$BASE_DIR/idle-resume.sh"
 
 # ---------------------------------------------------------
 # Compile native binary only when needed
@@ -243,6 +252,8 @@ fi
 # ---------------------------------------------------------
 
 bash -n "$BASE_DIR/blacklayer-worker.sh"
+bash -n "$BASE_DIR/start-waybars.sh"
+bash -n "$BASE_DIR/generate-waybar-configs.sh"
 
 python3 -m py_compile \
     "$BASE_DIR/input-activity.py" \
@@ -259,6 +270,10 @@ echo "GUI:"
 echo "  python3 $BASE_DIR/blacklayer-ui.py"
 
 echo
+echo "Waybar:"
+echo "  $BASE_DIR/start-waybars.sh"
+
+echo
 echo "Worker is normally started/stopped from the GUI."
 
 echo
@@ -271,3 +286,8 @@ echo
 echo "Inactivity:"
 echo "  input-activity.py -> blacklayer-worker.sh -> Blacklayer"
 echo "  hypridle is NOT required."
+
+echo
+echo "Waybar:"
+echo "  start-waybars.sh starts per-monitor Waybar instances."
+echo "  Blacklayer controls Waybar independently per monitor."
