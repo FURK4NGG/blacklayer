@@ -22,7 +22,15 @@ Required packets
 
 Arch
 ```
-sudo pacman -S gtk3 gdk-pixbuf2 gtk-layer-shell jq hypridle
+sudo pacman -S \
+gtk3 \
+gdk-pixbuf2 \
+gtk-layer-shell \
+jq \
+python \
+python-gobject \
+python-evdev \
+libadwaita
 ```
 <br><br>
 
@@ -30,22 +38,30 @@ Debian / Ubuntu
 !please install 'hypridle' manually!
 ```
 sudo apt install \
+python3 \
+python3-gi \
+python3-evdev \
+gir1.2-gtk-3.0 \
+gir1.2-adwaita-1 \
 libgtk-3-0 \
 libgdk-pixbuf-2.0-0 \
 libgtk-layer-shell0 \
+libadwaita-1-0 \
 jq
-
 ```
 <br><br>
 
 Fedora
 ```
 sudo dnf install \
+python3 \
+python3-gobject \
+python3-evdev \
 gtk3 \
 gdk-pixbuf2 \
 gtk-layer-shell \
-jq \
-hypridle
+libadwaita \
+jq
 ```
 <br><br>
 
@@ -80,20 +96,33 @@ Change these codes in your hyprland.conf document
 
 ## 🎉 Run/Stop blacklayer
 ```
-~/.config/blacklayer/call-blacklayer.sh
+~/.config/blacklayer/blacklayer-ui.py
 ```
 
 ## Reset
 ```
 cd ~/.config/blacklayer
 
+pkill -KILL -f "$HOME/.config/blacklayer/blacklayer-worker.sh" 2>/dev/null || true
+pkill -KILL -f "$HOME/.config/blacklayer/input-activity.py" 2>/dev/null || true
+
+rm -f ~/.config/blacklayer/blacklayer_worker.pid
+rm -f ~/.config/blacklayer/.input_main_monitor
+rm -f ~/.config/blacklayer/.input_activity
+rm -f ~/.config/blacklayer/.input_activity.*
+rm -f ~/.config/blacklayer/.blacklayer_state/pids/*.pid
+rm -f ~/.config/blacklayer/.blacklayer_state/waybar/*.pid
+rm -f ~/.config/blacklayer/.waybar_restore.lock
+rm -f ~/.config/blacklayer/event-driven.sh
+rm -f ~/.config/blacklayer/.blacklayer_idle.py
+rm -f ~/.config/blacklayer/hypridle.conf
+rm -f ~/.config/blacklayer/hypridle.service
+
 chmod +x blacklayer
 chmod +x blacklayer-worker.sh
 chmod +x input-activity.py
-chmod +x event-driven.sh
 chmod +x blacklayer-ui.py
-
-[ -f call-blacklayer.sh ] && chmod +x call-blacklayer.sh
+chmod +x generate-waybar-configs.sh
 
 chmod 600 blacklayer.conf
 
@@ -103,17 +132,6 @@ mkdir -p .blacklayer_state/waybar
 chmod 700 .blacklayer_state
 chmod 700 .blacklayer_state/pids
 chmod 700 .blacklayer_state/waybar
-
-
-pkill -KILL -f '/home/bob/.config/blacklayer/blacklayer-worker.sh'
-pkill -KILL -f '/home/bob/.config/blacklayer/input-activity.py'
-pkill -KILL -f '/home/bob/.config/blacklayer/event-driven.sh'
-
-rm -f ~/.config/blacklayer/blacklayer_worker.pid
-rm -f ~/.config/blacklayer/.input_main_monitor
-rm -f ~/.config/blacklayer/.blacklayer_state/pids/*.pid
-rm -f ~/.config/blacklayer/.blacklayer_state/waybar/*.pid
-rm -f ~/.config/blacklayer/.waybar_restore.lock
 ```
 
 # If you want to compile your special blacklayer.c document:
@@ -157,12 +175,14 @@ $(pkg-config --cflags --libs gtk+-3.0 gdk-pixbuf-2.0) \
 <br><br>
 
 ## Here are the available settings in blacklayer.conf:  
-run_blacklayer=true → Enable per-monitor blacklayer  
-run_lock=true  → Lock the session after inactivity  
-run_sleep=true → Turn off all displays after longer inactivity  
-LOOP_INTERVAL=60 → Main worker loop interval (in seconds)  
-COUNT_THRESHOLD=5 → Inactivity trigger threshold  
-EVENT_POLL_INTERVAL=3 → Event-driven polling interval (in seconds)  
+run_blacklayer=true → Enables Blacklayer after the inactivity threshold is reached  
+run_lock=true → Locks the session after the configured LOCK_DELAY  
+run_sleep=true → Suspends the system after the configured SLEEP_DELAY  
+BLACKLAYER_DELAY=5 → Inactivity time before Blacklayer opens  
+LOCK_DELAY=9 → Inactivity time before the session is locked  
+SLEEP_DELAY=20 → Inactivity time before the system is suspended  
+USE_INPUT_ACTIVITY=true → Monitors the focused monitor at the moment Run is clicked  
+USE_INPUT_ACTIVITY=false → Uses an independent inactivity timer for each monitor  
 resource= → Blacklayer background resource(png, jpg, gif)  
 
 !If you want to change blacklayer color:  
@@ -175,67 +195,88 @@ In hypridle.conf, the 'timeout:' values define how long the system must remain c
 
 ## ❓ HOW IT WORKS ❓
 
-                    Hyprland monitor count
-                             │
-                  ┌──────────┴──────────┐
-                  │                     │
-                1 monitor            2+ monitors
-                  │                     │
-                  ▼                     ▼
-          INPUT ACTIVITY           USE_INPUT_ACTIVITY?
-             REQUIRED                    │
-                  │               ┌──────┴──────┐
-                  │              true          false
-                  │               │               │
-                  ▼               ▼               ▼
-          input-activity.py   MAIN monitor     EXISTING
-                  │             only          REPOSITORY
-                  │               │               │
-                  ▼               ▼               ▼
-          Inactivity timer    Input activity   Focused /
-                  │               │             unfocused
-                  ▼               │               │
-             Blacklayer           ▼               ▼
-                  │           Blacklayer     COUNT_THRESHOLD
-                  ▼               │               │
-        Keyboard / mouse          ▼               ▼
-          activity → close   Keyboard / mouse  event-driven.sh
-                              activity → close        │
-                                                     ▼
-                                            EVENT_POLL_INTERVAL
+                  Hyprland monitor count
+                           │
+                ┌──────────┴──────────┐
+                │                     │
+             1 monitor              2+ monitors
+                │                     │
+                ▼                     ▼
+        INPUT ACTIVITY          USE_INPUT_ACTIVITY?
+           REQUIRED                  │
+                │              ┌─────┴─────┐
+                │             true        false
+                │              │             │
+                ▼              ▼             ▼
+       input-activity.py   TARGET MONITOR  EACH MONITOR
+                │              │          INDEPENDENT TIMER
+                │              │             │
+                ▼              ▼             ▼
+        Inactivity timer   Input activity  Input activity
+                │              │             │
+                ▼              ▼             ▼
+           Blacklayer      Blacklayer     Blacklayer
+                │              │             │
+                ▼              ▼             ▼
+       Input → close      Input → close   Input → close
+         Blacklayer         Blacklayer      Blacklayer
+
+
+
+                  USER INPUT
+                      │
+             ┌────────┴────────┐
+             │                 │
+          Keyboard            Mouse
+             │                 │
+             ▼                 ▼
+       Focused monitor    Cursor monitor
+             │                 │
+             └────────┬────────┘
+                      ▼
+              input-activity.py
+                      │
+                      ▼
+             activity timestamp
+                      │
+                      ▼
+            blacklayer-worker.sh
+                      │
+          ┌───────────┴───────────┐
+          │                       │
+    BLACKLAYER_DELAY          LOCK / SLEEP
+          │                       │
+          ▼                       ▼
+      Blacklayer             Lock / Suspend
+      
 
 ## [blacklayer.conf]
 - Stores Blacklayer configuration and resource settings  
 - Blacklayer’a ait ayarların ve kaynakların tutulduğu dosyadır  
 
-## [call-blacklayer.sh]
-- Toggles Blacklayer by starting or stopping blacklayer-worker  
-- Çağrıldığında blacklayer-worker’ı başlatır veya tüm işlemleri sonlandırır (toggle)  
-
 ## [blacklayer-worker.sh]
-- Counts idle time and activates the screensaver while hiding other UI elements  
-- Zamanı sayarak ekran koruyucuyu açar ve Waybar gibi diğer arayüzleri gizler  
+- Manages inactivity timers and triggers Blacklayer, lock, and suspend actions  
+- Inactivity sürelerini yönetir ve Blacklayer, kilitleme ve suspend işlemlerini tetikler  
+
+## [input-activity.py]
+- Monitors keyboard and mouse activity and resets the corresponding inactivity timer  
+- Klavye ve mouse hareketlerini izler ve ilgili inactivity timer’ını sıfırlar  
+
+## [blacklayer-ui.py]
+- Provides the Blacklayer configuration interface and controls the Run / Stop state of the worker  
+- Blacklayer yapılandırma arayüzünü sağlar ve worker’ın Run / Stop durumunu kontrol eder  
 
 ## [blacklayer]
-- Displays a fullscreen color, image, or animated GIF on the screen  
-- Ekranda tercihe göre sadece renk, resim ya da GIF oynatır  
+- Displays a fullscreen color, image, or GIF on the monitor  
+- Monitörde tam ekran renk, resim veya GIF görüntüler  
 
-## [event-driven.sh]
-- Listens for input events and stops Blacklayer when user activity is detected  
-- Blacklayer aktifken çalışır ve mouse/etkileşim algılandığında ekran koruyucuyu kapatır  
-<br><br>
+## [blacklayer.c]
+- Contains the source code for the native Blacklayer application  
+- Native Blacklayer uygulamasının kaynak kodunu içerir  
 
 ## [generate-waybar-configs.sh]
-- Generates one Waybar config per monitor from a single base config  
-- Tek bir config dosyasından her monitör için ayrı Waybar config’i üretir  
-
-## [start-waybars.sh]
-- Starts all Waybar instances simultaneously  
-- Tüm Waybar’ları aynı anda çalıştırmak için kullanılır  
-<br><br>
-
-## [HYPRIDLE]
-user-run(call-blacklayer.sh)  -->  Run Hypridle  -->  Detect no movement for X time  -->  idle-lock.sh or idle-sleep.sh(controls the blacklayer.conf>run-lock,run-sleep values for the run)  -->  If value is true(Lock Screen or Sleep Screen process)  -->  When movement detected, run(idle-resume.sh)  
+- Generates the required Waybar configuration for each monitor  
+- Her monitör için gerekli Waybar yapılandırmasını oluşturur  
 <br><br>
 
 ## Roadmap
