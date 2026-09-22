@@ -1,136 +1,273 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-echo "[blacklayer] installing..."
+APP_NAME="blacklayer"
+BASE_DIR="${HOME}/.config/blacklayer"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
-# -------------------------
-# Detect package manager & install jq
-# -------------------------
-install_jq() {
-    if command -v jq >/dev/null 2>&1 \
-        && command -v hypridle >/dev/null 2>&1 \
-        && ldconfig -p 2>/dev/null | grep -q libgtk-3 \
-        && ldconfig -p 2>/dev/null | grep -q gdk_pixbuf \
-        && ldconfig -p 2>/dev/null | grep -q gtk-layer-shell; then
-        echo "[blacklayer] all runtime dependencies already installed"
-        return
-    fi
-
-    echo "[blacklayer] missing dependencies, installing..."
-
-
-    if command -v pacman >/dev/null 2>&1; then
-        sudo pacman -Sy --noconfirm gtk3 gdk-pixbuf2 gtk-layer-shell jq hypridle
-
-    elif command -v apt >/dev/null 2>&1; then
-        sudo apt update
-        sudo apt install -y \
-        libgtk-3-0 \
-        libgdk-pixbuf-2.0-0 \
-        libgtk-layer-shell0 \
-        jq
-
-        echo "[blacklayer] unsupported package – please install hypridle manually"
-
-
-    elif command -v dnf >/dev/null 2>&1; then
-        sudo dnf install -y \
-        gtk3 \
-        gdk-pixbuf2 \
-        gtk-layer-shell \
-        jq \
-        hypridle
-
-
-    else
-        echo "[blacklayer] Unsupported distro."
-        echo "Please install required packages manually."
-
-        read -rp "Did you install all required packages? (y/n): " answer
-
-        case "$answer" in
-            y|Y|yes|YES)
-                echo "[blacklayer] Continuing..."
-                ;;
-            *)
-                echo "[blacklayer] Please install the packages and run this script again."
-                exit 1
-                ;;
-        esac
-    fi
+log() {
+    printf '[blacklayer] %s\n' "$*"
 }
 
-install_jq
+die() {
+    printf '[blacklayer] ERROR: %s\n' "$*" >&2
+    exit 1
+}
 
-# -------------------------
-# Paths
-# -------------------------
-BASE_DIR="$HOME/.config/blacklayer"
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
 
-# -------------------------
-# Create directory
-# -------------------------
+# ---------------------------------------------------------
+# Package installation
+#
+# Blacklayer does NOT use hypridle.
+# Inactivity is handled by input-activity.py + worker.
+# ---------------------------------------------------------
+
+install_packages() {
+    local pm=""
+
+    if command_exists pacman; then
+        pm="pacman"
+    elif command_exists apt-get; then
+        pm="apt"
+    elif command_exists dnf; then
+        pm="dnf"
+    else
+        return 1
+    fi
+
+    log "Installing runtime/build dependencies using ${pm}..."
+
+    case "$pm" in
+        pacman)
+            sudo pacman -S --needed --noconfirm \
+                gtk3 \
+                gdk-pixbuf2 \
+                gtk-layer-shell \
+                jq \
+                python \
+                python-gobject \
+                python-evdev \
+                libadwaita \
+                gcc \
+                pkgconf
+            ;;
+
+        apt)
+            sudo apt-get update
+            sudo apt-get install -y \
+                python3 \
+                python3-gi \
+                python3-evdev \
+                gir1.2-gtk-3.0 \
+                gir1.2-adwaita-1 \
+                libgtk-3-0 \
+                libgdk-pixbuf-2.0-0 \
+                libgtk-layer-shell0 \
+                libadwaita-1-0 \
+                jq \
+                gcc \
+                pkg-config \
+                libgtk-3-dev \
+                libgdk-pixbuf-2.0-dev \
+                libgtk-layer-shell-dev
+            ;;
+
+        dnf)
+            sudo dnf install -y \
+                python3 \
+                python3-gobject \
+                python3-evdev \
+                gtk3 \
+                gdk-pixbuf2 \
+                gtk-layer-shell \
+                libadwaita \
+                jq \
+                gcc \
+                pkgconf-pkg-config \
+                gtk3-devel \
+                gdk-pixbuf2-devel \
+                gtk-layer-shell-devel
+            ;;
+    esac
+}
+
+# ---------------------------------------------------------
+# Check / optionally install dependencies
+# ---------------------------------------------------------
+
+missing=()
+
+for cmd in bash jq hyprctl python3; do
+    command_exists "$cmd" || missing+=("$cmd")
+done
+
+python3 - <<'PY' >/dev/null 2>&1 || missing+=("python-gobject")
+import gi
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Gtk, Adw
+PY
+
+python3 - <<'PY' >/dev/null 2>&1 || missing+=("python-evdev")
+import evdev
+PY
+
+if [ "${#missing[@]}" -gt 0 ]; then
+    log "Missing dependencies: ${missing[*]}"
+    install_packages || die \
+        "Could not automatically install dependencies. Install the required packages and run install.sh again."
+fi
+
+# ---------------------------------------------------------
+# Verify dependencies after installation
+# ---------------------------------------------------------
+
+command_exists jq || die "jq is required."
+command_exists hyprctl || die "Hyprland/hyprctl was not found."
+command_exists python3 || die "python3 is required."
+
+python3 - <<'PY'
+import gi
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+from gi.repository import Gtk, Adw
+import evdev
+PY
+
+# ---------------------------------------------------------
+# Stop an existing Blacklayer session before replacing files
+# ---------------------------------------------------------
+
+if [ -f "$BASE_DIR/blacklayer-worker.sh" ]; then
+    log "Stopping existing Blacklayer session..."
+
+    pkill -f "${BASE_DIR}/blacklayer-worker.sh" 2>/dev/null || true
+    pkill -f "${BASE_DIR}/input-activity.py" 2>/dev/null || true
+fi
+
+# ---------------------------------------------------------
+# Install active project files only
+# ---------------------------------------------------------
+
 mkdir -p "$BASE_DIR"
 
-# -------------------------
-# Copy files
-# -------------------------
-echo "[blacklayer] copying files to $BASE_DIR"
-echo "[blacklayer] copying files to ~/.config/hypr/"
-echo "[blacklayer] copying files to ~/.config/systemd/user/"
-cp -rf blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklayer.sh start-waybars.sh generate-waybar-configs.sh idle-lock.sh idle-sleep.sh idle-resume.sh "$BASE_DIR/" 2>/dev/null
-sudo cp -rf ./pending-relocation/hypridle.conf ~/.config/hypr/ 2>/dev/null
-sudo cp -rf ./pending-relocation/hypridle.service ~/.config/systemd/user/ 2>/dev/null
+files=(
+    blacklayer
+    blacklayer.c
+    blacklayer.conf
+    blacklayer-worker.sh
+    input-activity.py
+    blacklayer-ui.py
+    generate-waybar-configs.sh
+    LICENSE
+    README.md
+)
 
+for file in "${files[@]}"; do
+    [ -f "$SCRIPT_DIR/$file" ] || die "Repository file missing: $file"
+    install -m 0644 "$SCRIPT_DIR/$file" "$BASE_DIR/$file"
+done
 
-# -------------------------
-# Permissions
-# -------------------------
-echo "[blacklayer] setting permissions"
+chmod 0755 \
+    "$BASE_DIR/blacklayer" \
+    "$BASE_DIR/blacklayer-worker.sh" \
+    "$BASE_DIR/input-activity.py" \
+    "$BASE_DIR/blacklayer-ui.py" \
+    "$BASE_DIR/generate-waybar-configs.sh"
 
-sudo chown -R bob:bob "$BASE_DIR"
-chmod 700 "$BASE_DIR"
-chmod +x "$BASE_DIR"/*.sh 2>/dev/null || true
-chmod 600 "$BASE_DIR"/*.conf 2>/dev/null || true
-[ -f "$BASE_DIR/blacklayer" ] && chmod +x "$BASE_DIR/blacklayer"
-systemctl --user daemon-reload
-systemctl --user enable hypridle.service
+chmod 0600 "$BASE_DIR/blacklayer.conf"
 
+mkdir -p "$BASE_DIR/.blacklayer_state/pids"
 
+chmod 0700 "$BASE_DIR/.blacklayer_state"
+chmod 0700 "$BASE_DIR/.blacklayer_state/pids"
 
-echo "What is yours status bar?"
-echo "1 - Waybar"
+# ---------------------------------------------------------
+# Remove obsolete files from older installations
+# ---------------------------------------------------------
+
+rm -f \
+    "$BASE_DIR/event-driven.sh" \
+    "$BASE_DIR/.blacklayer_idle.py" \
+    "$BASE_DIR/hypridle.conf" \
+    "$BASE_DIR/hypridle.service"
+
+# ---------------------------------------------------------
+# Compile native binary only when needed
+# ---------------------------------------------------------
+
+if [ ! -x "$BASE_DIR/blacklayer" ] || \
+   [ "$SCRIPT_DIR/blacklayer.c" -nt "$BASE_DIR/blacklayer" ]; then
+
+    log "Compiling native Blacklayer binary..."
+
+    pkg-config --exists gtk+-3.0 gdk-pixbuf-2.0 ||
+        die "GTK3/GDK-Pixbuf development packages are missing."
+
+    pkg-config --exists gtk-layer-shell-0.1 ||
+        die "gtk-layer-shell development package is missing."
+
+    gcc \
+        -O2 \
+        -Wall \
+        -Wextra \
+        -o "$BASE_DIR/blacklayer" \
+        "$BASE_DIR/blacklayer.c" \
+        $(pkg-config --cflags --libs gtk+-3.0 gdk-pixbuf-2.0) \
+        -lgtk-layer-shell
+fi
+
+# ---------------------------------------------------------
+# Optional Waybar configuration generation
+# ---------------------------------------------------------
+
+if command_exists waybar && [ -d "$HOME/.config/waybar" ]; then
+    read -r -p "Generate per-monitor Waybar configs now? [Y/n]: " answer
+    answer="${answer:-Y}"
+
+    case "$answer" in
+        y|Y|yes|YES)
+            "$BASE_DIR/generate-waybar-configs.sh"
+            ;;
+        *)
+            log "Skipping Waybar config generation."
+            ;;
+    esac
+fi
+
+# ---------------------------------------------------------
+# Validation
+# ---------------------------------------------------------
+
+bash -n "$BASE_DIR/blacklayer-worker.sh"
+
+python3 -m py_compile \
+    "$BASE_DIR/input-activity.py" \
+    "$BASE_DIR/blacklayer-ui.py"
+
+log "Installation complete."
+
 echo
-read -rp "Seçim (1): " CHOICE
+echo "Configuration:"
+echo "  $BASE_DIR/blacklayer.conf"
 
-case "$CHOICE" in
-    1)
-        echo "[+] Waybar yapılandırması hazırlanıyor"
-
-        cd "$HOME/.config/blacklayer/" || {
-            echo "HATA: ~/.config/blacklayer bulunamadı"
-            exit 1
-        }
-
-        sudo chown -R "$USER:$USER" "$HOME/.config/waybar"
-        chmod 700 "$HOME/.config/waybar"
-
-        ./generate-waybar-configs.sh
-        ;;
-    *)
-        echo "Geçersiz seçim"
-        exit 1
-        ;;
-esac
-
-# -------------------------
-# Done
-# -------------------------
 echo
-echo "[blacklayer] installation complete"
+echo "GUI:"
+echo "  python3 $BASE_DIR/blacklayer-ui.py"
+
 echo
-echo "Run with:"
-echo "  $BASE_DIR/call-blacklayer.sh"
-echo "Stop with:"
-echo "  $BASE_DIR/call-blacklayer.sh"
+echo "Worker is normally started/stopped from the GUI."
+
 echo
+echo "Architecture:"
+echo "  USE_INPUT_ACTIVITY=true  -> one target monitor per Run session"
+echo "  USE_INPUT_ACTIVITY=false -> independent inactivity per monitor"
+echo "  1 monitor                -> Input Activity is forced on"
+
+echo
+echo "Inactivity:"
+echo "  input-activity.py -> blacklayer-worker.sh -> Blacklayer"
+echo "  hypridle is NOT required."
