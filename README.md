@@ -73,6 +73,7 @@ cp blacklayer \
    blacklayer.conf \
    blacklayer-worker.sh \
    input-activity.py \
+   start-waybars.sh \
    blacklayer-ui.py \
    generate-waybar-configs.sh \
    LICENSE \
@@ -86,6 +87,7 @@ chmod +x \
     ~/.config/blacklayer/blacklayer-worker.sh \
     ~/.config/blacklayer/input-activity.py \
     ~/.config/blacklayer/blacklayer-ui.py \
+    ~/.config/blacklayer/start-waybars.sh \
     ~/.config/blacklayer/generate-waybar-configs.sh
 
 chmod 600 ~/.config/blacklayer/blacklayer.conf
@@ -137,6 +139,7 @@ chmod +x blacklayer
 chmod +x blacklayer-worker.sh
 chmod +x input-activity.py
 chmod +x blacklayer-ui.py
+chmod +x start-waybars.sh
 chmod +x generate-waybar-configs.sh
 
 chmod 600 blacklayer.conf
@@ -286,6 +289,10 @@ Then, compile the blacklayer.c file!
 ## [blacklayer.c]
 - Contains the source code for the native Blacklayer application  
 - Native Blacklayer uygulamasının kaynak kodunu içerir  
+
+## [start-waybars.sh]
+- Starts a separate Waybar instance for each monitor using its generated configuration  
+- Oluşturulan yapılandırmaları kullanarak her monitör için ayrı bir Waybar örneği başlatır  
 
 ## [generate-waybar-configs.sh]
 - Generates the required Waybar configuration for each monitor  
