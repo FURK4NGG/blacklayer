@@ -87,18 +87,32 @@ Change these codes in your hyprland.conf document
 ```
 cd ~/.config/blacklayer
 
+chmod +x blacklayer
+chmod +x blacklayer-worker.sh
+chmod +x input-activity.py
+chmod +x event-driven.sh
+chmod +x blacklayer-ui.py
+
+[ -f call-blacklayer.sh ] && chmod +x call-blacklayer.sh
+
+chmod 600 blacklayer.conf
+
+mkdir -p .blacklayer_state/pids
+mkdir -p .blacklayer_state/waybar
+
+chmod 700 .blacklayer_state
+chmod 700 .blacklayer_state/pids
+chmod 700 .blacklayer_state/waybar
+
+
 pkill -f 'blacklayer-worker.sh' 2>/dev/null || true
-pkill -f "$HOME/.config/blacklayer/input-activity.py" 2>/dev/null || true
-pkill -f "$HOME/.config/blacklayer/blacklayer " 2>/dev/null || true
+pkill -f 'input-activity.py' 2>/dev/null || true
+pkill -f 'event-driven.sh' 2>/dev/null || true
 
-rm -f .input_activity
-rm -f .input_activity.pid
-rm -f .input_main_monitor
-
-rm -f .blacklayer_lock.pid
-rm -f .blacklayer_sleep.pid
-
-rm -f .blacklayer_state/pids/*.pid 2>/dev/null || true
+rm -f ~/.config/blacklayer/blacklayer_worker.pid
+rm -f ~/.config/blacklayer/.input_main_monitor
+rm -f ~/.config/blacklayer/.blacklayer_state/pids/*.pid
+rm -f ~/.config/blacklayer/.blacklayer_state/waybar/*.pid
 ```
 
 # If you want to compile your special blacklayer.c document:
