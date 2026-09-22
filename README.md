@@ -105,9 +105,9 @@ chmod 700 .blacklayer_state/pids
 chmod 700 .blacklayer_state/waybar
 
 
-pkill -f 'blacklayer-worker.sh' 2>/dev/null || true
-pkill -f 'input-activity.py' 2>/dev/null || true
-pkill -f 'event-driven.sh' 2>/dev/null || true
+pkill -KILL -f '/home/bob/.config/blacklayer/blacklayer-worker.sh'
+pkill -KILL -f '/home/bob/.config/blacklayer/input-activity.py'
+pkill -KILL -f '/home/bob/.config/blacklayer/event-driven.sh'
 
 rm -f ~/.config/blacklayer/blacklayer_worker.pid
 rm -f ~/.config/blacklayer/.input_main_monitor
