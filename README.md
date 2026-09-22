@@ -83,6 +83,24 @@ Change these codes in your hyprland.conf document
 ~/.config/blacklayer/call-blacklayer.sh
 ```
 
+## Reset
+```
+cd ~/.config/blacklayer
+
+pkill -f 'blacklayer-worker.sh' 2>/dev/null || true
+pkill -f "$HOME/.config/blacklayer/input-activity.py" 2>/dev/null || true
+pkill -f "$HOME/.config/blacklayer/blacklayer " 2>/dev/null || true
+
+rm -f .input_activity
+rm -f .input_activity.pid
+rm -f .input_main_monitor
+
+rm -f .blacklayer_lock.pid
+rm -f .blacklayer_sleep.pid
+
+rm -f .blacklayer_state/pids/*.pid 2>/dev/null || true
+```
+
 # If you want to compile your special blacklayer.c document:
 Arch
 ```
