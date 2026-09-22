@@ -310,11 +310,37 @@ run_lock() {
 }
 
 run_sleep() {
-    [ "$run_sleep" = "true" ] || return 0
-    [ "$SLEEP_COMMAND" != "none" ] || return 0
+    [ "$run_sleep" = "true" ] || {
+        logger -t blacklayer "Sleep disabled: run_sleep=$run_sleep"
+        return 0
+    }
+
+    [ "$SLEEP_COMMAND" != "none" ] || {
+        logger -t blacklayer "Sleep disabled: SLEEP_COMMAND=none"
+        return 0
+    }
+
     [ -n "$SLEEP_COMMAND" ] || return 0
 
-    bash -c "$SLEEP_COMMAND" >/dev/null 2>&1 &
+    logger -t blacklayer "Sleep delay reached: $SLEEP_COMMAND"
+
+    case "$SLEEP_COMMAND" in
+        "systemctl suspend")
+            systemctl suspend
+            ;;
+        "loginctl suspend")
+            loginctl suspend
+            ;;
+        *)
+            bash -c "$SLEEP_COMMAND"
+            ;;
+    esac
+
+    local rc=$?
+
+    logger -t blacklayer "Sleep command exit code: $rc"
+
+    return "$rc"
 }
 
 start_input_activity() {

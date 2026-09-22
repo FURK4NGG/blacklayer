@@ -3,6 +3,7 @@
 import json
 import os
 import shutil
+import shlex
 import subprocess
 
 from pathlib import Path
@@ -116,8 +117,8 @@ EVENT_POLL_INTERVAL={cfg["EVENT_POLL_INTERVAL"]}
 LOCK_DELAY={cfg["LOCK_DELAY"]}
 SLEEP_DELAY={cfg["SLEEP_DELAY"]}
 
-LOCK_COMMAND={cfg["LOCK_COMMAND"]}
-SLEEP_COMMAND={cfg["SLEEP_COMMAND"]}
+LOCK_COMMAND={shlex.quote(cfg["LOCK_COMMAND"])}
+SLEEP_COMMAND={shlex.quote(cfg["SLEEP_COMMAND"])}
 
 resource={cfg["resource"]}
 
