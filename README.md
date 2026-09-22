@@ -35,7 +35,6 @@ libadwaita
 <br><br>
 
 Debian / Ubuntu  
-!please install 'hypridle' manually!
 ```
 sudo apt install \
 python3 \
