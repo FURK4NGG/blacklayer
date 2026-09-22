@@ -142,6 +142,35 @@ In hypridle.conf, the 'timeout:' values define how long the system must remain c
 
 ## ❓ HOW IT WORKS ❓
 
+                    Hyprland monitor count
+                             │
+                  ┌──────────┴──────────┐
+                  │                     │
+                1 monitor            2+ monitors
+                  │                     │
+                  ▼                     ▼
+          INPUT ACTIVITY           USE_INPUT_ACTIVITY?
+             REQUIRED                    │
+                  │               ┌──────┴──────┐
+                  │              true          false
+                  │               │               │
+                  ▼               ▼               ▼
+          input-activity.py   MAIN monitor     EXISTING
+                  │             only          REPOSITORY
+                  │               │               │
+                  ▼               ▼               ▼
+          Inactivity timer    Input activity   Focused /
+                  │               │             unfocused
+                  ▼               │               │
+             Blacklayer           ▼               ▼
+                  │           Blacklayer     COUNT_THRESHOLD
+                  ▼               │               │
+        Keyboard / mouse          ▼               ▼
+          activity → close   Keyboard / mouse  event-driven.sh
+                              activity → close        │
+                                                     ▼
+                                            EVENT_POLL_INTERVAL
+
 ## [blacklayer.conf]
 - Stores Blacklayer configuration and resource settings  
 - Blacklayer’a ait ayarların ve kaynakların tutulduğu dosyadır  
