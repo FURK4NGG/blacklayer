@@ -84,7 +84,7 @@ restore_waybar() {
     [ -f "$WAYBAR_CONFIG" ] || return 0
     [ -x "$WAYBAR_BIN" ] || return 0
 
-    # NEVER create duplicate Waybar.
+    # Always check this monitor immediately before starting.
     if find_waybar >/dev/null 2>&1; then
         return 0
     fi
@@ -133,9 +133,7 @@ while true; do
                kill -0 "$PID" 2>/dev/null; then
 
                 CMDLINE="$(
-                    tr '\0' ' ' <
-                    "/proc/$PID/cmdline" 2>/dev/null ||
-                    true
+                    tr '\0' ' ' < "/proc/$PID/cmdline" 2>/dev/null || true
                 )"
 
                 case "$CMDLINE" in

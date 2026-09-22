@@ -40,10 +40,127 @@ SLEEP_COMMAND="${SLEEP_COMMAND:-none}"
 
 export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}"
 
+# ---------------------------------------------------------
+# Singleton worker
+# ---------------------------------------------------------
+WORKER_LOCK_FILE="$BASE_DIR/.blacklayer_worker.lock"
+exec 9>"$WORKER_LOCK_FILE"
+
+if ! flock -n 9 2>/dev/null; then
+    exit 0
+fi
+
 echo "$$" > "$WORKER_PID_FILE"
 
+# Every new Run starts a fresh inactivity session. Never inherit an old
+# timestamp, otherwise LOCK/SLEEP can fire immediately after Run.
+now() {
+    date +%s
+}
+now > "$INPUT_FILE"
+
+
+is_blacklayer_pid() {
+    local pid="$1"
+
+    [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+    kill -0 "$pid" 2>/dev/null || return 1
+
+    [ -r "/proc/$pid/cmdline" ] || return 1
+
+    local cmdline
+    cmdline="$(
+        tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null || true
+    )"
+
+    case "$cmdline" in
+        *"$BLACKLAYER_BIN"*)
+            return 0
+            ;;
+    esac
+
+    return 1
+}
+
+waybar_running_for_monitor() {
+    local monitor="$1"
+    local config="$HOME/.config/waybar/config-$monitor"
+
+    [ -f "$config" ] || return 1
+
+    while read -r pid; do
+        [ -n "$pid" ] || continue
+        [ -r "/proc/$pid/cmdline" ] || continue
+
+        local cmdline
+        cmdline="$(
+            tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null || true
+        )"
+
+        case "$cmdline" in
+            *"$config"*)
+                return 0
+                ;;
+        esac
+    done < <(pgrep -x waybar 2>/dev/null || true)
+
+    return 1
+}
+
+restore_waybar() {
+    local monitor="$1"
+    local config="$HOME/.config/waybar/config-$monitor"
+
+    [ -f "$config" ] || return 0
+    [ -x /usr/bin/waybar ] || return 0
+
+    if waybar_running_for_monitor "$monitor"; then
+        return 0
+    fi
+
+    /usr/bin/waybar \
+        -c "$config" \
+        >/dev/null 2>&1 &
+}
+
+kill_tracked_blacklayers() {
+    for pid_file in "$PID_DIR"/*.pid; do
+        [ -f "$pid_file" ] || continue
+
+        local pid
+        local monitor
+
+        pid="$(sed -n '1p' "$pid_file" 2>/dev/null || true)"
+        monitor="$(sed -n '2p' "$pid_file" 2>/dev/null || true)"
+
+        if is_blacklayer_pid "$pid"; then
+            kill "$pid" 2>/dev/null || true
+
+            for _ in 1 2 3 4 5 6 7 8 9 10; do
+                kill -0 "$pid" 2>/dev/null || break
+                sleep 0.05
+            done
+
+            if kill -0 "$pid" 2>/dev/null; then
+                kill -9 "$pid" 2>/dev/null || true
+            fi
+
+            if [ -n "$monitor" ]; then
+                restore_waybar "$monitor"
+            fi
+        fi
+
+        rm -f "$pid_file"
+    done
+}
+
 cleanup() {
-    rm -f "$WORKER_PID_FILE"
+    kill_tracked_blacklayers
+
+    if [ -f "$WORKER_PID_FILE" ] &&
+       [ "$(cat "$WORKER_PID_FILE" 2>/dev/null || true)" = "$$" ]; then
+        rm -f "$WORKER_PID_FILE"
+    fi
 
     if [ -n "${INPUT_PID:-}" ]; then
         kill "$INPUT_PID" 2>/dev/null || true
@@ -55,10 +172,6 @@ cleanup() {
 }
 
 trap cleanup EXIT INT TERM
-
-now() {
-    date +%s
-}
 
 get_monitors() {
     hyprctl -j monitors 2>/dev/null |
@@ -162,6 +275,8 @@ start_blacklayer() {
         return 0
     fi
 
+    rm -f "$(blacklayer_pid_file "$monitor")"
+
     stop_waybar "$monitor"
 
     printf '%s\n%s\n' "$$" "$monitor" >/dev/null
@@ -205,10 +320,21 @@ run_sleep() {
 start_input_activity() {
     [ -f "$INPUT_ACTIVITY" ] || return 0
 
-    pkill -f "$INPUT_ACTIVITY" 2>/dev/null || true
+    if [ -n "${INPUT_PID:-}" ] &&
+       kill -0 "$INPUT_PID" 2>/dev/null; then
+        return 0
+    fi
+
+    # Remove orphaned watchers left by an older session, but do not restart
+    # the watcher on every loop iteration.
+    pgrep -f "python3 $INPUT_ACTIVITY" 2>/dev/null |
+    while read -r pid; do
+        [ -n "$pid" ] || continue
+        [ "$pid" = "$$" ] && continue
+        kill "$pid" 2>/dev/null || true
+    done
 
     python3 "$INPUT_ACTIVITY" >/dev/null 2>&1 &
-
     INPUT_PID=$!
 }
 
@@ -217,10 +343,24 @@ start_event_driven() {
 
     [ -f "$EVENT_DRIVEN" ] || return 0
 
+    # Never start a second event-driven watcher for the same monitor.
+    if [ -n "${EVENT_PID:-}" ] &&
+       kill -0 "$EVENT_PID" 2>/dev/null &&
+       [ "${EVENT_MONITOR:-}" = "$monitor" ]; then
+        return 0
+    fi
+
+    # Monitor focus changed: replace the old watcher.
+    if [ -n "${EVENT_PID:-}" ] &&
+       kill -0 "$EVENT_PID" 2>/dev/null; then
+        kill "$EVENT_PID" 2>/dev/null || true
+    fi
+
     bash "$EVENT_DRIVEN" "$monitor" "$EVENT_POLL_INTERVAL" \
         >/dev/null 2>&1 &
 
     EVENT_PID=$!
+    EVENT_MONITOR="$monitor"
 }
 
 # Make sure an initial activity timestamp exists.

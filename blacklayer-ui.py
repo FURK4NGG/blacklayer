@@ -143,29 +143,198 @@ def pid_alive(pid):
 
 
 def worker_running():
-    if not WORKER_PID.exists():
-        return False
+    """Detect any real worker process, not only the shared PID file."""
+    target = os.path.realpath(WORKER)
     try:
-        return pid_alive(WORKER_PID.read_text().strip())
+        for entry in os.listdir("/proc"):
+            if not entry.isdigit():
+                continue
+            pid = int(entry)
+            try:
+                exe = os.path.realpath(f"/proc/{pid}/exe")
+                if exe != target:
+                    continue
+                if pid != os.getpid():
+                    return True
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    # Fallback for bash scripts where /proc/exe is bash.
+    try:
+        for entry in os.listdir("/proc"):
+            if not entry.isdigit():
+                continue
+            pid = int(entry)
+            try:
+                cmd = Path(f"/proc/{pid}/cmdline").read_bytes().replace(
+                    b"\0", b" "
+                ).decode(errors="ignore")
+                if str(WORKER) in cmd and pid != os.getpid():
+                    return True
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    return False
+
+
+def is_blacklayer_process(pid):
+    try:
+        exe = os.path.realpath(f"/proc/{pid}/exe")
+        target = os.path.realpath(BASE_DIR / "blacklayer")
+        if exe == target:
+            return True
+    except Exception:
+        pass
+
+    try:
+        raw = Path(f"/proc/{pid}/cmdline").read_bytes()
+        cmd = raw.replace(b"\0", b" ").decode(errors="ignore")
+        return str(BASE_DIR / "blacklayer") in cmd
     except Exception:
         return False
 
 
-def stop_worker():
-    if WORKER_PID.exists():
+def kill_pid(pid):
+    try:
+        pid = int(pid)
+    except Exception:
+        return
+
+    try:
+        os.kill(pid, 15)
+    except ProcessLookupError:
+        return
+    except Exception:
+        return
+
+    for _ in range(20):
         try:
-            pid = int(WORKER_PID.read_text().strip())
-            os.kill(pid, 15)
+            os.kill(pid, 0)
+            GLib.usleep(50_000)
+        except ProcessLookupError:
+            return
+        except Exception:
+            return
+
+    try:
+        os.kill(pid, 9)
+    except Exception:
+        pass
+
+
+def stop_all_blacklayers():
+    monitors = set()
+
+    # First use the tracked state files so we know the intended monitor.
+    pid_dir = BASE_DIR / ".blacklayer_state" / "pids"
+    if pid_dir.exists():
+        for pid_file in pid_dir.glob("*.pid"):
+            try:
+                lines = pid_file.read_text(errors="ignore").splitlines()
+                pid = int(lines[0].strip())
+                if len(lines) > 1 and lines[1].strip():
+                    monitors.add(lines[1].strip())
+            except Exception:
+                pass
+
+    # Then scan every process. This catches duplicate/untracked Blacklayers
+    # caused by an old/stale PID file.
+    target = os.path.realpath(BASE_DIR / "blacklayer")
+    try:
+        proc_entries = os.listdir("/proc")
+    except Exception:
+        proc_entries = []
+
+    for entry in proc_entries:
+        if not entry.isdigit():
+            continue
+
+        pid = int(entry)
+        try:
+            exe = os.path.realpath(f"/proc/{pid}/exe")
+        except Exception:
+            continue
+
+        if exe != target:
+            continue
+
+        try:
+            raw = Path(f"/proc/{pid}/cmdline").read_bytes()
+            parts = [x for x in raw.split(b"\0") if x]
+            if len(parts) > 1:
+                monitors.add(parts[1].decode(errors="ignore"))
         except Exception:
             pass
 
+        kill_pid(pid)
+
+    if pid_dir.exists():
+        for pid_file in pid_dir.glob("*.pid"):
+            try:
+                lines = pid_file.read_text(errors="ignore").splitlines()
+                pid = int(lines[0].strip())
+                if is_blacklayer_process(pid):
+                    kill_pid(pid)
+            except Exception:
+                pass
+            try:
+                pid_file.unlink()
+            except Exception:
+                pass
+
+    for monitor in sorted(m for m in monitors if m):
+        restore_waybar_for_monitor(monitor)
+
+
+def stop_worker():
+    """Stop every Blacklayer session, including stale duplicate workers."""
+    worker_target = os.path.realpath(WORKER)
+    worker_pids = set()
+    input_pids = set()
+    event_pids = set()
+
     try:
-        subprocess.run(
-            ["pkill", "-f", str(WORKER)],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        )
+        entries = os.listdir("/proc")
+    except Exception:
+        entries = []
+
+    for entry in entries:
+        if not entry.isdigit():
+            continue
+        pid = int(entry)
+        if pid == os.getpid():
+            continue
+        try:
+            cmd = Path(f"/proc/{pid}/cmdline").read_bytes().replace(
+                b"\0", b" "
+            ).decode(errors="ignore")
+            exe = os.path.realpath(f"/proc/{pid}/exe")
+        except Exception:
+            continue
+
+        if exe == worker_target or str(WORKER) in cmd:
+            worker_pids.add(pid)
+        if str(BASE_DIR / "input-activity.py") in cmd:
+            input_pids.add(pid)
+        if str(BASE_DIR / "event-driven.sh") in cmd:
+            event_pids.add(pid)
+
+    # Stop worker processes first so they cannot immediately recreate children.
+    for pid in sorted(worker_pids):
+        kill_pid(pid)
+
+    for pid in sorted(input_pids | event_pids):
+        kill_pid(pid)
+
+    # Safety net: remove every native Blacklayer process and its state.
+    stop_all_blacklayers()
+
+    try:
+        WORKER_PID.unlink()
     except Exception:
         pass
 
@@ -217,29 +386,56 @@ def waybar_is_running_for_config(config):
     return False
 
 
-def restore_waybars():
+def restore_waybar_for_monitor(monitor):
+    config = Path.home() / ".config" / "waybar" / f"config-{monitor}"
     waybar = Path("/usr/bin/waybar")
-    if not waybar.exists():
+
+    if not config.is_file() or not waybar.is_file():
         return
 
-    waybar_dir = Path.home() / ".config" / "waybar"
-    if not waybar_dir.exists():
-        return
+    # Only this monitor's Waybar matters. If it is already running, never
+    # start another one.
+    try:
+        pids = subprocess.run(
+            ["pgrep", "-x", "waybar"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            check=False,
+        ).stdout.splitlines()
 
-    for config in sorted(waybar_dir.glob("config-*")):
-        if not config.is_file():
-            continue
-        if waybar_is_running_for_config(config):
-            continue
+        for pid in pids:
+            if not pid.strip().isdigit():
+                continue
+            try:
+                cmdline = Path(
+                    f"/proc/{pid.strip()}/cmdline"
+                ).read_bytes().replace(
+                    b"\0", b" "
+                ).decode(errors="ignore")
 
-        try:
-            subprocess.Popen(
-                [str(waybar), "-c", str(config)],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        except Exception:
-            pass
+                if str(config) in cmdline:
+                    return
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    try:
+        subprocess.Popen(
+            [str(waybar), "-c", str(config)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        pass
+
+
+def restore_waybars():
+    # Restore each configured monitor independently. Never let Waybar on one
+    # monitor suppress restoration on another monitor.
+    for monitor in get_monitors():
+        restore_waybar_for_monitor(monitor)
 
 
 class BlacklayerWindow(Adw.ApplicationWindow):
@@ -758,9 +954,8 @@ class BlacklayerWindow(Adw.ApplicationWindow):
 
     def stop_worker_clicked(self, _button):
         stop_worker()
-        restore_waybars()
         self.status_badge.set_text("Stopped")
-        notify("Blacklayer", "Stopped.")
+        notify("Blacklayer", "All Blacklayer instances stopped.")
 
     def refresh_clicked(self, _button):
         self.refresh_button.set_sensitive(False)

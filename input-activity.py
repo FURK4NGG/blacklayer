@@ -81,10 +81,40 @@ def is_blacklayer_process(pid, monitor):
     return False
 
 
+def waybar_running_for_monitor(monitor):
+    config = os.path.join(
+        WAYBAR_CONFIG_DIR,
+        f"config-{monitor}",
+    )
+
+    # Exact config check first.
+    try:
+        for pid in os.listdir("/proc"):
+            if not pid.isdigit():
+                continue
+
+            try:
+                with open(f"/proc/{pid}/cmdline", "rb") as f:
+                    cmdline = f.read().replace(
+                        b"\0", b" "
+                    ).decode(errors="ignore")
+
+                if "waybar" in cmdline and config in cmdline:
+                    return True
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    # A Waybar for another monitor does not count. Restoration is always
+    # decided independently for this monitor's exact config.
+    return False
+
+
 def restore_waybar(monitor):
     config = os.path.join(
         WAYBAR_CONFIG_DIR,
-        f"config-{monitor}"
+        f"config-{monitor}",
     )
 
     if not os.path.isfile(config):
@@ -93,28 +123,9 @@ def restore_waybar(monitor):
     if not os.path.isfile(WAYBAR_BIN):
         return
 
-    # NEVER create a duplicate Waybar.
-    try:
-        for pid in os.listdir("/proc"):
-            if not pid.isdigit():
-                continue
-
-            cmdline_file = f"/proc/{pid}/cmdline"
-
-            try:
-                with open(cmdline_file, "rb") as f:
-                    cmdline = f.read().replace(
-                        b"\0", b" "
-                    ).decode(errors="ignore")
-
-                if "waybar" in cmdline and config in cmdline:
-                    return
-
-            except Exception:
-                continue
-
-    except Exception:
-        pass
+    # Always check immediately before starting.
+    if waybar_running_for_monitor(monitor):
+        return
 
     subprocess.Popen(
         [WAYBAR_BIN, "-c", config],
@@ -123,82 +134,92 @@ def restore_waybar(monitor):
     )
 
 
+def process_monitor(pid):
+    try:
+        with open(f"/proc/{pid}/cmdline", "rb") as f:
+            parts = [x for x in f.read().split(b"\0") if x]
+
+        if len(parts) > 1:
+            return parts[1].decode(errors="ignore")
+    except Exception:
+        pass
+    return ""
+
+
 def close_blacklayer_on_activity():
-    if not os.path.isfile(MAIN_MONITOR_FILE):
-        return
+    killed_monitors = []
+    target = os.path.realpath(BLACKLAYER_BIN)
 
+    # Scan every Blacklayer process, not only PID files. This guarantees that
+    # a second instance with stale/overwritten state is also dismissed.
     try:
-        with open(MAIN_MONITOR_FILE) as f:
-            monitor = f.read().strip()
+        entries = os.listdir("/proc")
     except Exception:
-        return
+        entries = []
 
-    if not monitor:
-        return
+    for entry in entries:
+        if not entry.isdigit():
+            continue
 
-    pid_file = monitor_pid_file(monitor)
+        pid = int(entry)
 
-    if not os.path.isfile(pid_file):
-        return
-
-    try:
-        with open(pid_file) as f:
-            lines = [x.strip() for x in f.readlines()]
-
-        pid = int(lines[0])
-
-        stored_monitor = lines[1] if len(lines) > 1 else ""
-
-    except Exception:
-        return
-
-    if stored_monitor != monitor:
-        return
-
-    try:
-        os.kill(pid, 0)
-    except OSError:
         try:
-            os.remove(pid_file)
-        except FileNotFoundError:
+            exe = os.path.realpath(f"/proc/{pid}/exe")
+        except Exception:
+            continue
+
+        if exe != target:
+            continue
+
+        monitor = process_monitor(pid)
+
+        if not is_blacklayer_process(pid, monitor):
+            continue
+
+        killed = False
+
+        try:
+            os.kill(pid, signal.SIGTERM)
+
+            for _ in range(20):
+                try:
+                    os.kill(pid, 0)
+                    time.sleep(0.05)
+                except OSError:
+                    killed = True
+                    break
+
+            if not killed:
+                try:
+                    os.kill(pid, signal.SIGKILL)
+                    killed = True
+                except OSError:
+                    pass
+        except OSError:
             pass
-        return
 
-    if not is_blacklayer_process(pid, monitor):
-        return
+        if killed and monitor:
+            killed_monitors.append(monitor)
 
-    killed = False
+    # Remove stale PID state.
+    if os.path.isdir(PID_DIR):
+        for name in os.listdir(PID_DIR):
+            if name.endswith(".pid"):
+                try:
+                    os.remove(os.path.join(PID_DIR, name))
+                except FileNotFoundError:
+                    pass
 
-    try:
-        os.kill(pid, signal.SIGTERM)
-
-        for _ in range(20):
-            try:
-                os.kill(pid, 0)
-                time.sleep(0.05)
-            except OSError:
-                killed = True
-                break
-
-        if not killed:
-            try:
-                os.kill(pid, signal.SIGKILL)
-                killed = True
-            except OSError:
-                pass
-
-    except OSError:
-        pass
-
-    try:
-        os.remove(pid_file)
-    except FileNotFoundError:
-        pass
-
-    # IMPORTANT:
-    # Waybar is restored ONLY when Blacklayer was actually killed.
-    if killed:
+    # Only restore a monitor's Waybar if a Blacklayer on that monitor was
+    # actually killed, and check the target Waybar immediately before launch.
+    for monitor in sorted(set(killed_monitors)):
         restore_waybar(monitor)
+
+    try:
+        if os.path.exists(MAIN_MONITOR_FILE):
+            os.remove(MAIN_MONITOR_FILE)
+    except Exception:
+        pass
 
 
 def register_activity():
