@@ -66,19 +66,35 @@ jq
 <br><br>
 
 ```
-git clone https://github.com/furk4ngg/blacklayer.git  
-cd blacklayer  
-mkdir -p ~/.config/blacklayer  
-cp blacklayer event-driven.sh blacklayer.conf blacklayer-worker.sh call-blacklayer.sh start-waybars.sh generate-waybar-configs.sh idle-lock.sh idle-sleep.sh idle-resume.sh "$BASE_DIR/" 2>/dev/null  
-cp "/pending-relocation/hypridle.conf" "~/.config/hypr/" 2>/dev/null  
-cp "/pending-relocation/hypridle.service" "~/.config/systemd/user/" 2>/dev/null  
-sudo chown -R "$USER:$USER" ~/.config/blacklayer/  
-chmod 700 ~/.config/blacklayer  
-chmod +x ~/.config/blacklayer/*.sh 2>/dev/null || true  
-chmod 600 ~/.config/blacklayer/*.conf 2>/dev/null || true  
-[ -f ~/.config/blacklayer/blacklayer ] && chmod +x ~/.config/blacklayer/blacklayer
-systemctl --user daemon-reload  
-systemctl --user enable hypridle.service  
+git clone https://github.com/furk4ngg/blacklayer.git
+cd blacklayer
+mkdir -p ~/.config/blacklayer
+cp blacklayer \
+   blacklayer.c \
+   blacklayer.conf \
+   blacklayer-worker.sh \
+   input-activity.py \
+   blacklayer-ui.py \
+   generate-waybar-configs.sh \
+   LICENSE \
+   README.md \
+   ~/.config/blacklayer/
+
+sudo chown -R "$USER:$USER" ~/.config/blacklayer/
+chmod 700 ~/.config/blacklayer
+chmod +x \
+    ~/.config/blacklayer/blacklayer \
+    ~/.config/blacklayer/blacklayer-worker.sh \
+    ~/.config/blacklayer/input-activity.py \
+    ~/.config/blacklayer/blacklayer-ui.py \
+    ~/.config/blacklayer/generate-waybar-configs.sh
+
+chmod 600 ~/.config/blacklayer/blacklayer.conf
+mkdir -p ~/.config/blacklayer/.blacklayer_state/pids
+mkdir -p ~/.config/blacklayer/.blacklayer_state/waybar
+chmod 700 ~/.config/blacklayer/.blacklayer_state
+chmod 700 ~/.config/blacklayer/.blacklayer_state/pids
+chmod 700 ~/.config/blacklayer/.blacklayer_state/waybar
 ```
 
  
@@ -189,8 +205,6 @@ resource= → Blacklayer background resource(png, jpg, gif)
 Change the color value: blacklayer.c > static const GdkRGBA DEFAULT_COLOR = { 0.0, 0.0, 0.0, 1.0 };  
 Then, compile the blacklayer.c file!  
 
-## Here are the available settings in hypridle.conf:  
-In hypridle.conf, the 'timeout:' values define how long the system must remain completely idle (no keyboard or mouse input) before the corresponding lock or sleep scripts are executed.  
 <br><br>
 
 ## ❓ HOW IT WORKS ❓
