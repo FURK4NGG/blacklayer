@@ -113,6 +113,7 @@ rm -f ~/.config/blacklayer/blacklayer_worker.pid
 rm -f ~/.config/blacklayer/.input_main_monitor
 rm -f ~/.config/blacklayer/.blacklayer_state/pids/*.pid
 rm -f ~/.config/blacklayer/.blacklayer_state/waybar/*.pid
+rm -f ~/.config/blacklayer/.waybar_restore.lock
 ```
 
 # If you want to compile your special blacklayer.c document:
