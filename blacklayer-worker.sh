@@ -10,6 +10,7 @@ INPUT_ACTIVITY="$BASE_DIR/input-activity.py"
 
 STATE_DIR="$BASE_DIR/.blacklayer_state"
 PID_DIR="$STATE_DIR/pids"
+SOURCE_PID_DIR="$STATE_DIR/source_pids"
 
 GLOBAL_ACTIVITY="$BASE_DIR/.input_activity"
 
@@ -19,6 +20,7 @@ WORKER_LOCK_FILE="$BASE_DIR/.blacklayer_worker.lock"
 
 mkdir -p "$STATE_DIR"
 mkdir -p "$PID_DIR"
+mkdir -p "$SOURCE_PID_DIR"
 
 [ -f "$CONFIG" ] || exit 1
 
@@ -33,6 +35,7 @@ SLEEP_DELAY="${SLEEP_DELAY:-60}"
 USE_INPUT_ACTIVITY="${USE_INPUT_ACTIVITY:-true}"
 
 run_blacklayer="${run_blacklayer:-true}"
+source="${source:-}"
 run_lock="${run_lock:-true}"
 run_sleep="${run_sleep:-false}"
 
@@ -329,6 +332,120 @@ blacklayer_running() {
 
 
 # =========================================================
+# SELECTED SOURCE
+# =========================================================
+
+source_pid_file() {
+    printf '%s/%s.pid\n' \
+        "$SOURCE_PID_DIR" \
+        "$(safe_name "$1")"
+}
+
+source_running() {
+    local monitor="$1"
+    local file pid
+    file="$(source_pid_file "$monitor")"
+    [ -f "$file" ] || return 1
+    pid="$(head -n1 "$file" 2>/dev/null || true)"
+    [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+    kill -0 "$pid" 2>/dev/null
+}
+
+source_command() {
+    local path="$1"
+    local first interp
+
+    [ -f "$path" ] || return 1
+
+    IFS= read -r first < "$path" || true
+
+    if [[ "$first" == '#!'* ]]; then
+        first="${first#!}"
+        read -r -a parts <<< "$first"
+        [ "${#parts[@]}" -gt 0 ] || return 1
+
+        if [ "$(basename "${parts[0]}")" = "env" ]; then
+            parts=("${parts[@]:1}")
+            while [ "${#parts[@]}" -gt 0 ] && [[ "${parts[0]}" == -* ]]; do
+                parts=("${parts[@]:1}")
+            done
+        fi
+
+        [ "${#parts[@]}" -gt 0 ] || return 1
+        printf '%q ' "${parts[@]}"
+        printf '%q\n' "$path"
+        return 0
+    fi
+
+    case "${path##*.}" in
+        py) printf '%q %q\n' python3 "$path"; return 0 ;;
+        sh) printf '%q %q\n' bash "$path"; return 0 ;;
+        bash) printf '%q %q\n' bash "$path"; return 0 ;;
+        zsh) printf '%q %q\n' zsh "$path"; return 0 ;;
+        fish) printf '%q %q\n' fish "$path"; return 0 ;;
+        js|mjs|cjs) printf '%q %q\n' node "$path"; return 0 ;;
+        rb) printf '%q %q\n' ruby "$path"; return 0 ;;
+        lua) printf '%q %q\n' lua "$path"; return 0 ;;
+        pl) printf '%q %q\n' perl "$path"; return 0 ;;
+        php) printf '%q %q\n' php "$path"; return 0 ;;
+    esac
+
+    if [ -x "$path" ]; then
+        printf '%q\n' "$path"
+        return 0
+    fi
+
+    return 1
+}
+
+start_selected_source() {
+    local monitor="$1"
+    local path="${source:-}"
+    local file pid
+    local cmdline
+
+    [ -n "$path" ] || return 1
+    [ -f "$path" ] || return 1
+
+    if source_running "$monitor"; then
+        return 0
+    fi
+
+    file="$(source_pid_file "$monitor")"
+    rm -f "$file"
+
+    cmdline="$(source_command "$path")" || return 1
+    [ -n "$cmdline" ] || return 1
+
+    # Use a new process group so input-activity and Stop can terminate
+    # the widget and any children it creates together.
+    # Tell the source which monitor triggered its inactivity timer.
+    # This does not alter the source command-line arguments.
+    BLACKLAYER_MONITOR="$monitor" setsid bash -c "exec $cmdline" >/dev/null 2>&1 &
+    pid=$!
+
+    {
+        echo "$pid"
+        echo "$monitor"
+    } > "$file"
+
+    return 0
+}
+
+stop_selected_source() {
+    local monitor="$1"
+    local file pid
+    file="$(source_pid_file "$monitor")"
+    [ -f "$file" ] || return 0
+    pid="$(head -n1 "$file" 2>/dev/null || true)"
+    if [[ "$pid" =~ ^[0-9]+$ ]]; then
+        kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+    fi
+    rm -f "$file"
+}
+
+
+# =========================================================
 # START BLACKLAYER
 # =========================================================
 
@@ -337,6 +454,11 @@ start_blacklayer() {
     local monitor="$1"
 
     [ "$run_blacklayer" = "true" ] ||
+        return 0
+
+    # A selected source is the Blacklayer target. Do not start the native
+    # image overlay as well, otherwise it covers the widget with its surface.
+    [ -n "$source" ] &&
         return 0
 
     [ -x "$BLACKLAYER_BIN" ] ||
@@ -659,11 +781,12 @@ while :; do
         IDLE=$((CURRENT - ACTIVITY))
 
 
-        if [ "$run_blacklayer" = "true" ] &&
-           [ "$IDLE" -ge "$BLACKLAYER_DELAY" ]; then
-
-            start_blacklayer "$monitor"
-
+        if [ "$IDLE" -ge "$BLACKLAYER_DELAY" ]; then
+            if [ -n "$source" ]; then
+                start_selected_source "$monitor"
+            elif [ "$run_blacklayer" = "true" ]; then
+                start_blacklayer "$monitor"
+            fi
         fi
 
 
@@ -708,11 +831,12 @@ while :; do
             IDLE=$((CURRENT - ACTIVITY))
 
 
-            if [ "$run_blacklayer" = "true" ] &&
-               [ "$IDLE" -ge "$BLACKLAYER_DELAY" ]; then
-
-                start_blacklayer "$monitor"
-
+            if [ "$IDLE" -ge "$BLACKLAYER_DELAY" ]; then
+                if [ -n "$source" ]; then
+                    start_selected_source "$monitor"
+                elif [ "$run_blacklayer" = "true" ]; then
+                    start_blacklayer "$monitor"
+                fi
             fi
 
         done < <(

@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import shlex
+import signal
 import subprocess
 
 from pathlib import Path
@@ -19,6 +20,8 @@ BASE_DIR = Path.home() / ".config" / "blacklayer"
 CONFIG_FILE = BASE_DIR / "blacklayer.conf"
 WORKER = BASE_DIR / "blacklayer-worker.sh"
 WORKER_PID = BASE_DIR / "blacklayer_worker.pid"
+SOURCE_PID = BASE_DIR / "blacklayer_source.pid"
+UI_PID = BASE_DIR / "blacklayer-ui.pid"
 
 DEFAULTS = {
     "USE_INPUT_ACTIVITY": "true",
@@ -32,6 +35,7 @@ DEFAULTS = {
     "LOCK_COMMAND": "none",
     "SLEEP_COMMAND": "none",
     "resource": "",
+    "source": "",
     "WAYLAND_DISPLAY": "wayland-1",
     "dark_mode": "true",
 }
@@ -121,6 +125,7 @@ LOCK_COMMAND={shlex.quote(cfg["LOCK_COMMAND"])}
 SLEEP_COMMAND={shlex.quote(cfg["SLEEP_COMMAND"])}
 
 resource={cfg["resource"]}
+source={cfg["source"]}
 
 WAYLAND_DISPLAY={cfg["WAYLAND_DISPLAY"]}
 
@@ -291,12 +296,156 @@ def stop_all_blacklayers():
         restore_waybar_for_monitor(monitor)
 
 
+def source_running():
+    if not SOURCE_PID.exists():
+        return False
+    try:
+        pid = int(SOURCE_PID.read_text().strip())
+        if pid_alive(pid):
+            return True
+    except Exception:
+        pass
+    try:
+        SOURCE_PID.unlink()
+    except Exception:
+        pass
+    return False
+
+
+def stop_source():
+    source_dir = BASE_DIR / ".blacklayer_state" / "source_pids"
+    if source_dir.exists():
+        for pid_file in source_dir.glob("*.pid"):
+            try:
+                lines = pid_file.read_text(errors="ignore").splitlines()
+                pid = int(lines[0].strip())
+                try:
+                    os.killpg(pid, signal.SIGTERM)
+                except Exception:
+                    kill_pid(pid)
+                for _ in range(20):
+                    if not pid_alive(pid):
+                        break
+                    GLib.usleep(50_000)
+                if pid_alive(pid):
+                    try:
+                        os.killpg(pid, signal.SIGKILL)
+                    except Exception:
+                        kill_pid(pid)
+            except Exception:
+                pass
+            try:
+                pid_file.unlink()
+            except Exception:
+                pass
+
+    # Backward compatibility with the older global source PID file.
+    try:
+        pid = int(SOURCE_PID.read_text().strip())
+    except Exception:
+        pid = None
+    if pid:
+        try:
+            os.killpg(pid, signal.SIGTERM)
+        except Exception:
+            kill_pid(pid)
+        try:
+            SOURCE_PID.unlink()
+        except Exception:
+            pass
+
+
+def detect_source_command(path):
+    path = Path(path).expanduser()
+    if not path.is_file():
+        return None, "Source file was not found."
+
+    # Shebang always wins. This lets clock-widget.py choose its own runtime.
+    try:
+        first = path.open("r", encoding="utf-8", errors="ignore").readline().strip()
+    except Exception as exc:
+        return None, f"Could not read source: {exc}"
+
+    if first.startswith("#!"):
+        parts = shlex.split(first[2:].strip())
+        if not parts:
+            return None, "The shebang is empty."
+        if Path(parts[0]).name == "env":
+            parts = [x for x in parts[1:] if not x.startswith("-")]
+            if not parts:
+                return None, "The /usr/bin/env shebang has no interpreter."
+        interpreter = parts[0]
+        if not os.path.isabs(interpreter) and not command_exists(interpreter):
+            return None, f"Interpreter not found: {interpreter}"
+        if os.path.isabs(interpreter) and not Path(interpreter).exists():
+            return None, f"Interpreter not found: {interpreter}"
+        return parts + [str(path)], None
+
+    # Python files are intentionally accepted only when they are executable
+    # or have a normal .py extension. The extension fallback keeps the UI
+    # convenient when the file has no shebang.
+    ext = path.suffix.lower()
+    runtimes = {
+        ".py": "python3",
+        ".sh": "bash",
+        ".bash": "bash",
+        ".zsh": "zsh",
+        ".fish": "fish",
+        ".js": "node",
+        ".mjs": "node",
+        ".cjs": "node",
+        ".rb": "ruby",
+        ".lua": "lua",
+        ".pl": "perl",
+        ".php": "php",
+    }
+    runtime = runtimes.get(ext)
+    if runtime:
+        if not command_exists(runtime):
+            return None, f"Interpreter not installed: {runtime}"
+        return [runtime, str(path)], None
+
+    if os.access(path, os.X_OK):
+        return [str(path)], None
+
+    return None, "Unsupported source type and no executable permission."
+
+
+def run_source():
+    source = read_config().get("source", "").strip()
+    if not source:
+        return True, "No source selected."
+    if source_running():
+        return True, "Source is already running."
+
+    command, error = detect_source_command(source)
+    if error:
+        return False, error
+
+    try:
+        BASE_DIR.mkdir(parents=True, exist_ok=True)
+        proc = subprocess.Popen(
+            command,
+            cwd=str(Path(source).expanduser().parent),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        SOURCE_PID.write_text(str(proc.pid))
+        try:
+            os.chmod(SOURCE_PID, 0o600)
+        except OSError:
+            pass
+        return True, f"Source started: {Path(source).name}"
+    except Exception as exc:
+        return False, f"Could not start source: {exc}"
+
+
 def stop_worker():
-    """Stop every Blacklayer session, including stale duplicate workers."""
+    """Stop worker, input watcher, source process and native Blacklayer."""
     worker_target = os.path.realpath(WORKER)
     worker_pids = set()
     input_pids = set()
-    event_pids = set()
 
     try:
         entries = os.listdir("/proc")
@@ -321,17 +470,13 @@ def stop_worker():
             worker_pids.add(pid)
         if str(BASE_DIR / "input-activity.py") in cmd:
             input_pids.add(pid)
-        if str(BASE_DIR / "event-driven.sh") in cmd:
-            event_pids.add(pid)
 
-    # Stop worker processes first so they cannot immediately recreate children.
     for pid in sorted(worker_pids):
         kill_pid(pid)
-
-    for pid in sorted(input_pids | event_pids):
+    for pid in sorted(input_pids):
         kill_pid(pid)
 
-    # Safety net: remove every native Blacklayer process and its state.
+    stop_source()
     stop_all_blacklayers()
 
     try:
@@ -444,6 +589,10 @@ class BlacklayerWindow(Adw.ApplicationWindow):
         super().__init__(application=app)
 
         self.cfg = read_config()
+        if self.cfg.get("resource", "").strip():
+            self.cfg["source"] = ""
+        elif self.cfg.get("source", "").strip():
+            self.cfg["resource"] = ""
         self.monitors = []
         self.dirty = False
         self._refreshing = False
@@ -645,7 +794,7 @@ class BlacklayerWindow(Adw.ApplicationWindow):
         self.poll_delay = self.add_spin(
             timing,
             "Event polling interval",
-            "Used by legacy multi-monitor event-driven mode",
+            "Polling interval retained for compatibility with the config.",
             self.cfg["EVENT_POLL_INTERVAL"],
             1,
             3600,
@@ -682,43 +831,39 @@ class BlacklayerWindow(Adw.ApplicationWindow):
             self.sleep_selected,
         )
 
-        resource = self.add_group(
+        target = self.add_group(
             page,
-            "Resource",
-            "Image or animation used by Blacklayer.",
+            "Resource / Source",
+            "Choose one file. Images stay as Blacklayer resources; runnable files are started automatically.",
         )
 
-        resource_box = Gtk.Box(
+        target_box = Gtk.Box(
             orientation=Gtk.Orientation.HORIZONTAL,
             spacing=8,
         )
-        resource_box.set_margin_top(8)
-        resource_box.set_margin_bottom(8)
-        resource_box.set_margin_start(12)
-        resource_box.set_margin_end(12)
-        resource_box.set_hexpand(True)
+        target_box.set_margin_top(8)
+        target_box.set_margin_bottom(8)
+        target_box.set_margin_start(12)
+        target_box.set_margin_end(12)
+        target_box.set_hexpand(True)
 
-        self.resource_entry = Gtk.Entry()
-        self.resource_entry.set_hexpand(True)
-        self.resource_entry.set_text(self.cfg["resource"])
-        self.resource_entry.set_placeholder_text(
-            "PNG, JPG, JPEG or GIF"
+        self.target_entry = Gtk.Entry()
+        self.target_entry.set_hexpand(True)
+        self.target_entry.set_text(
+            self.cfg.get("resource", "").strip()
+            or self.cfg.get("source", "").strip()
         )
-        self.resource_entry.connect(
-            "changed",
-            lambda entry: self.set_value(
-                "resource",
-                entry.get_text(),
-            ),
+        self.target_entry.set_placeholder_text(
+            "PNG, JPG, JPEG, GIF, .py, .sh, .js or executable"
         )
+        self.target_entry.connect("changed", self.target_changed)
 
         browse = Gtk.Button(label="Browse")
-        browse.connect("clicked", self.choose_resource)
+        browse.connect("clicked", self.choose_target)
 
-        resource_box.append(self.resource_entry)
-        resource_box.append(browse)
-        resource.add(resource_box)
-
+        target_box.append(self.target_entry)
+        target_box.append(browse)
+        target.add(target_box)
 
         bottom = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
@@ -903,24 +1048,37 @@ class BlacklayerWindow(Adw.ApplicationWindow):
                 Adw.ColorScheme.FORCE_LIGHT
             )
 
-    def choose_resource(self, _button):
+    @staticmethod
+    def is_resource_file(path):
+        return Path(path).suffix.lower() in {
+            ".png", ".jpg", ".jpeg", ".gif"
+        }
+
+    def target_changed(self, entry):
+        path = entry.get_text().strip()
+        if not path:
+            self.cfg["resource"] = ""
+            self.cfg["source"] = ""
+        elif self.is_resource_file(path):
+            self.cfg["resource"] = path
+            self.cfg["source"] = ""
+        else:
+            self.cfg["resource"] = ""
+            self.cfg["source"] = path
+        self.mark_dirty()
+
+    def choose_target(self, _button):
         dialog = Gtk.FileDialog()
         try:
-            dialog.open(
-                self,
-                None,
-                self.resource_chosen,
-            )
+            dialog.open(self, None, self.target_chosen)
         except Exception:
             pass
 
-    def resource_chosen(self, dialog, result):
+    def target_chosen(self, dialog, result):
         try:
             file = dialog.open_finish(result)
             if file:
-                self.resource_entry.set_text(
-                    file.get_path() or ""
-                )
+                self.target_entry.set_text(file.get_path() or "")
         except Exception:
             pass
 
@@ -928,30 +1086,35 @@ class BlacklayerWindow(Adw.ApplicationWindow):
         if self.dirty:
             self.save()
 
-        if worker_running():
-            self.status_badge.set_text("Running")
-            notify("Blacklayer", "Worker is already running.")
-            return
+        worker_ok = True
+        worker_started = False
+        if not worker_running():
+            if not WORKER.exists():
+                worker_ok = False
+                notify("Blacklayer", "Worker file was not found.")
+            else:
+                try:
+                    WORKER.chmod(0o755)
+                    subprocess.Popen(
+                        ["bash", str(WORKER)],
+                        cwd=str(BASE_DIR),
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        start_new_session=True,
+                    )
+                    worker_started = True
+                except Exception:
+                    worker_ok = False
+                    notify("Blacklayer", "Could not start the worker.")
 
-        if not WORKER.exists():
-            self.status_badge.set_text("Worker not found")
-            notify("Blacklayer", "Worker file was not found.")
-            return
-
-        try:
-            WORKER.chmod(0o755)
-            subprocess.Popen(
-                ["bash", str(WORKER)],
-                cwd=str(BASE_DIR),
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
+        if worker_ok:
             self.status_badge.set_text("Running")
-            notify("Blacklayer", "Started.")
-        except Exception:
+            if worker_started:
+                notify("Blacklayer", "Started.")
+            elif self.cfg.get("source", "").strip():
+                notify("Blacklayer", "Started. Selected source will run after inactivity delay.")
+        else:
             self.status_badge.set_text("Error")
-            notify("Blacklayer", "Could not start the worker.")
 
     def stop_worker_clicked(self, _button):
         stop_worker()
@@ -1044,7 +1207,7 @@ class BlacklayerWindow(Adw.ApplicationWindow):
             self.input_row.set_sensitive(True)
 
         self.status_badge.set_text(
-            "Running" if worker_running() else "Stopped"
+            "Running" if (worker_running() or source_running()) else "Stopped"
         )
 
         return True
@@ -1063,6 +1226,69 @@ class BlacklayerApp(Adw.Application):
         window.present()
 
 
+def current_ui_pid():
+    try:
+        pid = int(UI_PID.read_text().strip())
+    except Exception:
+        return None
+    if pid == os.getpid() or not pid_alive(pid):
+        return None
+    try:
+        cmd = Path(f"/proc/{pid}/cmdline").read_bytes().replace(b"\0", b" ").decode(errors="ignore")
+        if "blacklayer-ui.py" in cmd:
+            return pid
+    except Exception:
+        pass
+    return None
+
+
+def toggle_existing_ui():
+    pid = current_ui_pid()
+    if not pid:
+        try:
+            UI_PID.unlink()
+        except Exception:
+            pass
+        return False
+    try:
+        os.kill(pid, signal.SIGTERM)
+        return True
+    except Exception:
+        return False
+
+
+def acquire_ui_pid():
+    BASE_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        fd = os.open(UI_PID, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        return False
+    with os.fdopen(fd, "w") as f:
+        f.write(str(os.getpid()))
+    return True
+
+
+def release_ui_pid():
+    try:
+        if int(UI_PID.read_text().strip()) == os.getpid():
+            UI_PID.unlink()
+    except Exception:
+        pass
+
+
 if __name__ == "__main__":
+    if toggle_existing_ui():
+        raise SystemExit(0)
+    if not acquire_ui_pid():
+        # A race with another launcher: treat the second invocation as toggle.
+        if toggle_existing_ui():
+            raise SystemExit(0)
+        raise SystemExit(1)
+
     app = BlacklayerApp()
-    raise SystemExit(app.run(None))
+    signal.signal(signal.SIGTERM, lambda *_: GLib.idle_add(app.quit))
+    signal.signal(signal.SIGINT, lambda *_: GLib.idle_add(app.quit))
+    try:
+        raise SystemExit(app.run(None))
+    finally:
+        release_ui_pid()

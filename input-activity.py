@@ -24,6 +24,16 @@ PID_DIR = os.path.join(
     "pids"
 )
 
+# Worker-owned source process groups.
+# Required by close_blacklayer() to stop selected .py/.sh/etc sources.
+SOURCE_PID_DIR = os.path.join(
+    STATE_DIR,
+    "source_pids"
+)
+
+os.makedirs(PID_DIR, exist_ok=True)
+os.makedirs(SOURCE_PID_DIR, exist_ok=True)
+
 GLOBAL_ACTIVITY = os.path.join(
     BASE_DIR,
     ".input_activity"
@@ -471,6 +481,55 @@ def close_blacklayer(monitor):
 
     if not monitor:
         return
+
+    # Close the selected Python/script source exactly like native Blacklayer.
+    # The worker stores one source process-group PID per monitor.
+    source_file = os.path.join(
+        SOURCE_PID_DIR,
+        safe_name(monitor) + ".pid"
+    )
+    try:
+        if os.path.isfile(source_file):
+            with open(source_file, "r", encoding="utf-8", errors="ignore") as f:
+                pid = f.readline().strip()
+            if pid.isdigit():
+                source_pid = int(pid)
+
+                # Worker launches sources with setsid, so this PID is
+                # also the process-group leader.
+                try:
+                    os.kill(-source_pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+                except Exception:
+                    try:
+                        os.kill(source_pid, signal.SIGTERM)
+                    except Exception:
+                        pass
+
+                # Allow GTK/Python to handle SIGTERM, then force-kill
+                # the complete process group if it remains.
+                deadline = time.monotonic() + 0.75
+                while time.monotonic() < deadline:
+                    try:
+                        os.kill(-source_pid, 0)
+                    except ProcessLookupError:
+                        break
+                    except Exception:
+                        break
+                    time.sleep(0.05)
+
+                try:
+                    os.kill(-source_pid, signal.SIGKILL)
+                except Exception:
+                    pass
+
+            try:
+                os.unlink(source_file)
+            except Exception:
+                pass
+    except Exception:
+        pass
 
 
     target = os.path.realpath(
