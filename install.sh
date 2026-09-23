@@ -159,6 +159,7 @@ files=(
     blacklayer.c
     blacklayer.conf
     blacklayer-worker.sh
+    clock-widget.py
     input-activity.py
     blacklayer-ui.py
     start-waybars.sh
@@ -175,6 +176,7 @@ done
 chmod 0755 \
     "$BASE_DIR/blacklayer" \
     "$BASE_DIR/blacklayer-worker.sh" \
+    "$BASE_DIR/clock-widget.py" \
     "$BASE_DIR/input-activity.py" \
     "$BASE_DIR/blacklayer-ui.py" \
     "$BASE_DIR/start-waybars.sh" \
@@ -257,7 +259,10 @@ bash -n "$BASE_DIR/generate-waybar-configs.sh"
 
 python3 -m py_compile \
     "$BASE_DIR/input-activity.py" \
-    "$BASE_DIR/blacklayer-ui.py"
+    "$BASE_DIR/blacklayer-ui.py" \
+    "$BASE_DIR/clock-widget.py"
+
+chmod +x "$BASE_DIR/clock-widget.py"
 
 log "Installation complete."
 
@@ -274,7 +279,13 @@ echo "Waybar:"
 echo "  $BASE_DIR/start-waybars.sh"
 
 echo
-echo "Worker is normally started/stopped from the GUI."
+echo "Custom Python Widget:"
+echo "  $BASE_DIR/clock-widget.py"
+echo "  chmod +x $BASE_DIR/clock-widget.py"
+
+echo
+echo "Worker:"
+echo "  $BASE_DIR/blacklayer-worker.sh"
 
 echo
 echo "Architecture:"
@@ -284,10 +295,22 @@ echo "  1 monitor                -> Input Activity is forced on"
 
 echo
 echo "Inactivity:"
-echo "  input-activity.py -> blacklayer-worker.sh -> Blacklayer"
+echo "  input-activity.py -> blacklayer-worker.sh -> Blacklayer / custom source"
 echo "  hypridle is NOT required."
+
+echo
+echo "Custom Sources:"
+echo "  Python scripts, shell scripts and other executables can be used"
+echo "  as custom inactivity widgets/screens."
+echo "  Each source is started on the monitor whose inactivity timer expires."
 
 echo
 echo "Waybar:"
 echo "  start-waybars.sh starts per-monitor Waybar instances."
 echo "  Blacklayer controls Waybar independently per monitor."
+
+echo
+echo "Process check:"
+echo "  pgrep -af \"blacklayer-worker.sh\""
+echo "  pgrep -af \"input-activity.py\""
+echo "  pgrep -af \"clock-widget.py\""
