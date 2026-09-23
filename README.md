@@ -286,6 +286,7 @@ Then, compile the blacklayer.c file!
 - Each monitor can independently launch and close its configured custom widget  
 - Custom widgets receive the target monitor through the `BLACKLAYER_MONITOR` environment variable  
  <br>
+ 
 - Örnek bir özel Python inactivity widget'ı sağlar  
 - Native Blacklayer image resource yerine custom source olarak çalışabilir  
 - GTK4 ve GTK4 Layer Shell kullanır  
