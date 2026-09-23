@@ -204,7 +204,7 @@ LOCK_DELAY=9 → Inactivity time before the session is locked
 SLEEP_DELAY=20 → Inactivity time before the system is suspended  
 USE_INPUT_ACTIVITY=true → Monitors the focused monitor at the moment Run is clicked  
 USE_INPUT_ACTIVITY=false → Uses an independent inactivity timer for each monitor  
-resource= → Blacklayer background resource(png, jpg, gif)  
+resource= → Blacklayer background resource(png, jpg, gif,py)  
 
 !If you want to change blacklayer color:  
 Change the color value: blacklayer.c > static const GdkRGBA DEFAULT_COLOR = { 0.0, 0.0, 0.0, 1.0 };  
