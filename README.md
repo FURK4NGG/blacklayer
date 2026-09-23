@@ -331,7 +331,6 @@ Then, compile the blacklayer.c file!
 To verify whether the blacklayer process is running, use:  
 pgrep -af "blacklayer-worker.sh"  
 
-Note: The `grep` command itself may appear in the output.  
 
 # Fast Installation   
 sudo pacman -Syu git  
