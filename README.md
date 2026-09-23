@@ -329,7 +329,7 @@ Then, compile the blacklayer.c file!
 
 # Tips  
 To verify whether the blacklayer process is running, use:  
-ps aux | grep call-blacklayer.sh  
+pgrep -af "blacklayer-worker.sh"  
 
 Note: The `grep` command itself may appear in the output.  
 
