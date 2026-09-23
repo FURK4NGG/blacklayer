@@ -277,6 +277,24 @@ Then, compile the blacklayer.c file!
 - Manages inactivity timers and triggers Blacklayer, lock, and suspend actions  
 - Inactivity sürelerini yönetir ve Blacklayer, kilitleme ve suspend işlemlerini tetikler  
 
+## [clock-widget.py]
+- Provides an example custom Python inactivity widget  
+- Runs as a custom source instead of the native Blacklayer image resource  
+- Supports GTK4 and GTK4 Layer Shell  
+- Can be displayed on the specific monitor whose inactivity timer expires  
+- Users can create their own Python widgets, clocks, dashboards, animations, or custom screens  
+- Each monitor can independently launch and close its configured custom widget  
+- Custom widgets receive the target monitor through the `BLACKLAYER_MONITOR` environment variable  
+
+
+- Örnek bir özel Python inactivity widget'ı sağlar  
+- Native Blacklayer image resource yerine custom source olarak çalışabilir  
+- GTK4 ve GTK4 Layer Shell kullanır  
+- Hareketsizlik zamanlayıcısı tetiklenen belirli monitörde görüntülenebilir  
+- Kullanıcılar kendi Python saat, dashboard, animasyon veya özel ekran widget'larını oluşturabilir  
+- Her monitör kendi inactivity durumuna göre yapılandırılmış custom widget'ını bağımsız olarak açıp kapatabilir  
+- Custom widget'lar hedef monitörü `BLACKLAYER_MONITOR` environment değişkeni üzerinden alabilir  
+
 ## [input-activity.py]
 - Monitors keyboard and mouse activity and resets the corresponding inactivity timer  
 - Klavye ve mouse hareketlerini izler ve ilgili inactivity timer’ını sıfırlar  
