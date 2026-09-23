@@ -1,5 +1,5 @@
 ## 👀 blacklayer Overview  
-A lightweight, per-monitor inactivity screen saver for Hyprland that automatically dims inactive displays and instantly restores them when activity is detected. It supports both single-target and independent per-monitor activity monitoring, with optional session locking and system suspend after prolonged inactivity.  
+A lightweight, per-monitor inactivity screen saver for Hyprland that automatically dims inactive displays and instantly restores them when activity is detected. It supports both single-target and independent per-monitor activity monitoring, with optional session locking and system suspend after prolonged inactivity.Blacklayer also supports custom Python widgets and other executable sources, allowing users to create and display their own clocks, dashboards, animations, or other custom inactivity screens on a per-monitor basis.  
 <br><br>
 
 [![blacklayer Demo Video](https://github.com/user-attachments/assets/c99873a1-ef0a-42a6-a6e8-66ede9074440)](https://github.com/user-attachments/assets/40fe7394-0690-441f-a1b9-12b85e41d43b)
@@ -72,9 +72,10 @@ cp blacklayer \
    blacklayer.c \
    blacklayer.conf \
    blacklayer-worker.sh \
+   clock-widget.py \
    input-activity.py \
-   start-waybars.sh \
    blacklayer-ui.py \
+   start-waybars.sh \
    generate-waybar-configs.sh \
    LICENSE \
    README.md \
@@ -85,6 +86,7 @@ chmod 700 ~/.config/blacklayer
 chmod +x \
     ~/.config/blacklayer/blacklayer \
     ~/.config/blacklayer/blacklayer-worker.sh \
+    ~/.config/blacklayer/clock-widget.py \
     ~/.config/blacklayer/input-activity.py \
     ~/.config/blacklayer/blacklayer-ui.py \
     ~/.config/blacklayer/start-waybars.sh \
@@ -137,6 +139,7 @@ rm -f ~/.config/blacklayer/hypridle.service
 
 chmod +x blacklayer
 chmod +x blacklayer-worker.sh
+chmod +x clock-widget.py
 chmod +x input-activity.py
 chmod +x blacklayer-ui.py
 chmod +x start-waybars.sh
@@ -303,8 +306,8 @@ Then, compile the blacklayer.c file!
 - [x] Changeable and resizable background(color, png, jpg, gif) using by .conf
 - [x] Run logout codes when detect no movement in any monitor
 - [x] Closes the screen when detect no movement in any monitor
+- [x] Clock widget
 - [ ] Moving the workspaces from the screen where Blacklayer is running to another screen
-- [ ] Clock widget
 
 # Tips  
 To verify whether the blacklayer process is running, use:  
