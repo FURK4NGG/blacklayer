@@ -13,7 +13,7 @@ A lightweight, per-monitor inactivity screen saver for Hyprland that automatical
 - [x] Changeable and resizable background(color, png, jpg, gif) using by .conf
 - [x] Run logout codes when detect no movement in any monitor
 - [x] Closes the screen when detect no movement in any monitor
-- [x] Run Python-based widgets, including fully custom user-created widgets(Clock widget)
+- [x] Run Python-based widgets, including fully custom user-created widgets exp.(Clock widget)
 - [ ] Moving the workspaces from the screen where Blacklayer is running to another screen
 
 
