@@ -2,7 +2,7 @@
 A lightweight, per-monitor inactivity screen saver for Hyprland that automatically dims inactive displays and instantly restores them when activity is detected. It supports both single-target and independent per-monitor activity monitoring, with optional session locking and system suspend after prolonged inactivity.Blacklayer also supports custom Python widgets and other executable sources, allowing users to create and display their own clocks, dashboards, animations, or other custom inactivity screens on a per-monitor basis.  
 <br><br>
 
-[![blacklayer Demo Video](https://github.com/user-attachments/assets/c99873a1-ef0a-42a6-a6e8-66ede9074440)](https://github.com/user-attachments/assets/40fe7394-0690-441f-a1b9-12b85e41d43b)
+[![blacklayer Demo Video](https://github.com/user-attachments/assets/c99873a1-ef0a-42a6-a6e8-66ede9074440)](https://github.com/FURK4NGG/blacklayer/blob/main/%7B%7D/blacklayer.mp4)
 
 [![blacklayer Demo Video](https://github.com/user-attachments/assets/68f1ec5e-6734-45d1-9a4e-756ea2b618a6)](https://github.com/user-attachments/assets/a8207566-6148-4196-87dd-dba462894d42)
 
