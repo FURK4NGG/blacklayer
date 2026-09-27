@@ -8,6 +8,15 @@ A lightweight, per-monitor inactivity screen saver for Hyprland that automatical
 
 
 <br><br>
+
+## 🚀 Features
+- [x] Changeable and resizable background(color, png, jpg, gif) using by .conf
+- [x] Run logout codes when detect no movement in any monitor
+- [x] Closes the screen when detect no movement in any monitor
+- [x] Clock widget
+- [ ] Moving the workspaces from the screen where Blacklayer is running to another screen
+
+
 # ✅ Works On
 wlroots-based Wayland compositors (Hyprland, Sway, River, Wayfire, Hikari, Labwc(wlroots based) )
 <br><br>
@@ -319,13 +328,6 @@ Then, compile the blacklayer.c file!
 - Generates the required Waybar configuration for each monitor  
 - Her monitör için gerekli Waybar yapılandırmasını oluşturur  
 <br><br>
-
-## Roadmap
-- [x] Changeable and resizable background(color, png, jpg, gif) using by .conf
-- [x] Run logout codes when detect no movement in any monitor
-- [x] Closes the screen when detect no movement in any monitor
-- [x] Clock widget
-- [ ] Moving the workspaces from the screen where Blacklayer is running to another screen
 
 # Tips  
 To verify whether the blacklayer process is running, use:  
